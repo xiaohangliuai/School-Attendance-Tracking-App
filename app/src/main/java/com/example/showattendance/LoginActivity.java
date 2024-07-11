@@ -7,6 +7,7 @@ import static android.content.ContentValues.TAG;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
@@ -38,6 +39,7 @@ public class LoginActivity extends AppCompatActivity {
         editTextPassword = findViewById(R.id.editTextPassword);
         radioGroupRole = findViewById(R.id.radioGroupRole);
         buttonLogin = findViewById(R.id.buttonLogin);
+        Button buttonBack = findViewById(R.id.buttonBack);
 
         mAuth = FirebaseAuth.getInstance();
 
@@ -79,6 +81,17 @@ public class LoginActivity extends AppCompatActivity {
                         });
             } else {
                 Toast.makeText(LoginActivity.this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
+
+        buttonBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                startActivity(intent);
+
             }
         });
     }

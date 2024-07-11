@@ -2,10 +2,12 @@ package com.example.showattendance;
 
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -160,6 +162,7 @@ public class TeacherActivity extends AppCompatActivity {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1000;
 
     private Button buttonShowStudents;
+    private  Button buttonSignOut;
     private RecyclerView recyclerView;
     private TextView teacherGps;
 
@@ -180,6 +183,7 @@ public class TeacherActivity extends AppCompatActivity {
         buttonShowStudents = findViewById(R.id.buttonShowStudents);
         recyclerView = findViewById(R.id.recyclerView);
         teacherGps = findViewById(R.id.textViewTeacherGps);
+        buttonSignOut = findViewById(R.id.buttonSignOut);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         mAuth = FirebaseAuth.getInstance();
@@ -196,6 +200,15 @@ public class TeacherActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(TeacherActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
             } else {
                 getInformation();
+            }
+        });
+
+        buttonSignOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(TeacherActivity.this, MainActivity.class);
+                startActivity(intent);
+
             }
         });
     }
@@ -236,6 +249,7 @@ public class TeacherActivity extends AppCompatActivity {
                                 float[] results = new float[1];
                                 Location.distanceBetween(teacherLatitude, teacherLongitude, studentLatitude, studentLongitude, results);
                                 double distance = results[0];
+                                distance = Math.round(distance * 100.0) / 100.0;
                                 String attendance = distance < 10 ? "Present" : "Absent";
 
                                 studentList.add(new Student(user.getEmail(), gpsPoints, distance, attendance));
