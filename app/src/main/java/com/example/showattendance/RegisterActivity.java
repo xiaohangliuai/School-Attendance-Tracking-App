@@ -39,7 +39,6 @@ public class RegisterActivity extends AppCompatActivity {
         editTextPassword = findViewById(R.id.editTextPassword);
         radioGroupRole = findViewById(R.id.radioGroupRole);
         buttonRegister = findViewById(R.id.buttonRegister);
-        Button buttonBack = findViewById(R.id.buttonBack);
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
@@ -52,7 +51,7 @@ public class RegisterActivity extends AppCompatActivity {
             RadioButton radioButtonRole = findViewById(selectedRoleId);
             String role = radioButtonRole.getText().toString();
 
-            if (!email.isEmpty() && !password.isEmpty() && selectedRoleId != -1) {
+            if (!email.isEmpty() && !password.isEmpty() && selectedRoleId != -1 && email.toLowerCase().endsWith("mail.yu.edu")) {
 
                 mAuth.createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -69,7 +68,7 @@ public class RegisterActivity extends AppCompatActivity {
                                         db.collection("Users").document(firebaseUser.getUid()).set(user)
                                                 .addOnSuccessListener(aVoid -> {
                                                     Toast.makeText(RegisterActivity.this, "Registration successful", Toast.LENGTH_SHORT).show();
-                                                    Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                                                    Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
                                                     startActivity(intent);
                                                     finish();
                                                 })
@@ -90,19 +89,11 @@ public class RegisterActivity extends AppCompatActivity {
                         });
             }
             else{
-                    Toast.makeText(RegisterActivity.this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RegisterActivity.this, "Please input the correct one", Toast.LENGTH_SHORT).show();
                 }
 
 
         });
 
-        buttonBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
-                startActivity(intent);
-
-            }
-        });
     }
 }

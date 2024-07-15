@@ -1,21 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    tools:context=".MainActivity">
 
+<!--    &lt;!&ndash; Background Image &ndash;&gt;-->
+<!--    <ImageView-->
+<!--        android:id="@+id/background_image"-->
+<!--        android:layout_width="395dp"-->
+<!--        android:layout_height="715dp"-->
+<!--        android:alpha="0.2"-->
+<!--        android:scaleType="centerCrop"-->
+<!--        android:src="@drawable/YU_blue" />-->
+
+    <!-- AttendYU logo -->
+    <TextView
+        android:id="@+id/logo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AttendYU"
+        android:textSize="36sp"
+        android:textColor="@color/purple"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="100dp"
+        android:fontFamily="sans-serif-light"
+        android:layout_alignParentTop="true"
+        />
+
+
+    <!-- Email input field -->
+    <EditText
+        android:id="@+id/editTextEmail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="YU Email"
+        android:inputType="textEmailAddress"
+        android:layout_below="@id/logo"
+        android:layout_marginTop="32dp"
+        android:padding="12dp"
+        android:background="@drawable/edit_text_background" />
+
+    <!-- Password input field -->
+    <EditText
+        android:id="@+id/editTextPassword"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Password"
+        android:inputType="textPassword"
+        android:layout_below="@id/editTextEmail"
+        android:layout_marginTop="16dp"
+        android:padding="12dp"
+        android:background="@drawable/edit_text_background" />
+
+    <!-- Role Selection -->
+    <RadioGroup
+        android:id="@+id/radioGroupRole"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/editTextPassword"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/radioButtonTeacher"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Teacher"
+            android:textColor="@color/purple"
+            android:padding="12dp" />
+
+        <RadioButton
+            android:id="@+id/radioButtonStudent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Student"
+            android:textColor="@color/purple"
+            android:padding="12dp" />
+    </RadioGroup>
+
+    <!-- Log In button -->
     <Button
         android:id="@+id/buttonLogin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Login" />
+        android:text="Log In"
+        android:textColor="#FFFFFF"
+        android:background="@color/purple"
+        android:layout_below="@id/radioGroupRole"
+        android:layout_marginTop="16dp"
+        android:padding="12dp" />
 
-    <Button
+    <!-- Sign Up link -->
+    <TextView
         android:id="@+id/buttonRegister"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Register" />
+        android:text="Sign up"
+        android:textColor="@color/purple"
+        android:layout_below="@id/buttonLogin"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:clickable="true"
+        android:focusable="true" />
+
+</RelativeLayout>
 
 
-</LinearLayout>
+
+    <!--<?xml version="1.0" encoding="utf-8"?>-->
+<!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--    android:layout_width="match_parent"-->
+<!--    android:layout_height="match_parent"-->
+<!--    android:orientation="vertical"-->
+<!--    android:padding="16dp">-->
+
+<!--    <Button-->
+<!--        android:id="@+id/buttonLogin"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="Login" />-->
+
+<!--    <Button-->
+<!--        android:id="@+id/buttonRegister"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="Register" />-->
+
+
+<!--</LinearLayout>-->
