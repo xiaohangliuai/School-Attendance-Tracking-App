@@ -23,7 +23,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class RegisterActivity extends AppCompatActivity {
-    private EditText editTextEmail, editTextPassword;
+    private EditText editTextEmail, editTextPassword, editTextFirstName, editTextLastName;
     private RadioGroup radioGroupRole;
     private Button buttonRegister;
 
@@ -39,6 +39,8 @@ public class RegisterActivity extends AppCompatActivity {
         editTextPassword = findViewById(R.id.editTextPassword);
         radioGroupRole = findViewById(R.id.radioGroupRole);
         buttonRegister = findViewById(R.id.buttonRegister);
+        editTextFirstName = findViewById(R.id.editTextFirstName);
+        editTextLastName = findViewById(R.id.editTextLastName);
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
@@ -50,6 +52,8 @@ public class RegisterActivity extends AppCompatActivity {
             int selectedRoleId = radioGroupRole.getCheckedRadioButtonId();
             RadioButton radioButtonRole = findViewById(selectedRoleId);
             String role = radioButtonRole.getText().toString();
+            String firstName = editTextFirstName.getText().toString();
+            String lastName = editTextLastName.getText().toString();
 
             if (!email.isEmpty() && !password.isEmpty() && selectedRoleId != -1 && email.toLowerCase().endsWith("mail.yu.edu")) {
 
@@ -63,7 +67,7 @@ public class RegisterActivity extends AppCompatActivity {
                                     FirebaseUser firebaseUser = mAuth.getCurrentUser();
 
                                     if (firebaseUser != null) {
-                                        User user = new User(email, role, "");
+                                        User user = new User(email, role, "", firstName, lastName);
 
                                         db.collection("Users").document(firebaseUser.getUid()).set(user)
                                                 .addOnSuccessListener(aVoid -> {
@@ -89,7 +93,7 @@ public class RegisterActivity extends AppCompatActivity {
                         });
             }
             else{
-                    Toast.makeText(RegisterActivity.this, "Please input the correct one", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RegisterActivity.this, "Please input the correct information", Toast.LENGTH_SHORT).show();
                 }
 
 

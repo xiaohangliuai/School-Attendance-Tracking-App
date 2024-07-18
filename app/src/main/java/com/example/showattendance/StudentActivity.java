@@ -10,26 +10,34 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.common.internal.safeparcel.SafeParcelable;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,11 +45,19 @@ public class StudentActivity extends AppCompatActivity {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
 
     private TextView textViewLocation;
-    private Button buttonShowLocation;
+    private Button buttonShowLocation, buttonAddClasses;
     private FusedLocationProviderClient fusedLocationClient;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private Button buttonSignOut;
+
+    private FloatingActionButton fabAddClass;
+    private RecyclerView recyclerViewClass;
+    ClassAdapter classAdapterClass;
+    RecyclerView.LayoutManager layoutManager;
+    ArrayList<ClassItem> classItems = new ArrayList<>();
+    EditText class_edt;
+    EditText CRNs_edit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +67,17 @@ public class StudentActivity extends AppCompatActivity {
         textViewLocation = findViewById(R.id.textViewLocation);
         buttonShowLocation = findViewById(R.id.buttonShowLocation);
         buttonSignOut = findViewById(R.id.buttonSignOut);
+        buttonAddClasses = findViewById(R.id.buttonAddClasses);
+        fabAddClass = findViewById(R.id.fabAddClass);
+
+        recyclerViewClass = findViewById(R.id.recyclerViewClass);
+        recyclerViewClass.setHasFixedSize(true);
+        layoutManager = new LinearLayoutManager(this);
+        recyclerViewClass.setLayoutManager(layoutManager);
+
+        classAdapterClass = new ClassAdapter(this, classItems);
+        recyclerViewClass.setAdapter(classAdapterClass);
+
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         mAuth = FirebaseAuth.getInstance();
@@ -73,6 +100,37 @@ public class StudentActivity extends AppCompatActivity {
 
             }
         });
+
+        buttonAddClasses.setOnClickListener(v -> showDialog());
+    }
+
+    private void  showDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.class_dialog, null);
+        builder.setView(view);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        class_edt = view.findViewById(R.id.editTextClassName);
+        CRNs_edit = view.findViewById(R.id.editTextCRNs);
+
+        Button cancel = view.findViewById(R.id.buttonCancel);
+        Button add = view.findViewById(R.id.buttonAdd);
+
+        cancel.setOnClickListener(v -> dialog.dismiss());
+        add.setOnClickListener(v -> {
+            addClass();
+            dialog.dismiss();
+        });
+
+
+    }
+
+    private void addClass() {
+        String className = class_edt.getText().toString();
+        int CRNs = Integer.parseInt(CRNs_edit.getText().toString());;
+        classItems.add(new ClassItem(className, CRNs));
+        classAdapterClass.notifyDataSetChanged();
     }
 
     private void getAndUpdateLocation() {

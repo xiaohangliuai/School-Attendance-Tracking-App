@@ -56,6 +56,7 @@ dependencies {
     // For example, add the dependencies for Firebase Authentication and Cloud Firestore
     implementation("com.google.firebase:firebase-auth:21.0.1")
     implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.android.material:material:1.12.0")
 
 
 
