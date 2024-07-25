@@ -1,53 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    tools:context=".StudentActivity">
 
     <Button
         android:id="@+id/buttonShowLocation"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Show My Location" />
+        android:text="Show My Location"
+        app:layout_constraintBottom_toTopOf="@+id/textViewLocation"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/textViewLocation"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:paddingTop="16dp" />
+        android:gravity="center"
+        android:paddingTop="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/buttonSelectClass"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttonShowLocation" />
 
     <Button
-        android:id="@+id/buttonAddClasses"
-        android:layout_width="match_parent"
+        android:id="@+id/buttonSelectClass"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Add Classes" 
-        />
+        android:text="Select Class"
+        app:layout_constraintBottom_toTopOf="@+id/buttonSignOut"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewLocation" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewClass"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            />
+
 
     <Button
         android:id="@+id/buttonSignOut"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Sign out" />
+        android:text="Sign Out"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttonSelectClass" />
 
+</androidx.constraintlayout.widget.ConstraintLayout>
 
-    
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabAddClass"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="150dp"
-        android:layout_marginRight="150dp"
-        android:layout_margin="150dp"
-        android:src="@drawable/baseline_add_circle_24"/>
-
-</LinearLayout>
 
 
 
@@ -71,10 +75,34 @@
 <!--        android:layout_height="wrap_content"-->
 <!--        android:paddingTop="16dp" />-->
 
+
 <!--    <Button-->
 <!--        android:id="@+id/buttonSignOut"-->
 <!--        android:layout_width="match_parent"-->
 <!--        android:layout_height="wrap_content"-->
 <!--        android:text="Sign out" />-->
+
+<!--    -->
+
+
+
+
+<!--    <Button-->
+<!--        android:id="@+id/buttonAddClasses"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="Add Classes" -->
+<!--        />-->
+
+<!--        <androidx.recyclerview.widget.RecyclerView-->
+<!--            android:id="@+id/recyclerViewClass"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            />-->
+
+
+
+
+
 
 <!--</LinearLayout>-->

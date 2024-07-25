@@ -39,6 +39,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class StudentActivity extends AppCompatActivity {
@@ -49,7 +50,7 @@ public class StudentActivity extends AppCompatActivity {
     private FusedLocationProviderClient fusedLocationClient;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
-    private Button buttonSignOut;
+    private Button buttonSignOut, buttonSelectClass;
 
     private FloatingActionButton fabAddClass;
     private RecyclerView recyclerViewClass;
@@ -67,16 +68,17 @@ public class StudentActivity extends AppCompatActivity {
         textViewLocation = findViewById(R.id.textViewLocation);
         buttonShowLocation = findViewById(R.id.buttonShowLocation);
         buttonSignOut = findViewById(R.id.buttonSignOut);
-        buttonAddClasses = findViewById(R.id.buttonAddClasses);
-        fabAddClass = findViewById(R.id.fabAddClass);
-
-        recyclerViewClass = findViewById(R.id.recyclerViewClass);
-        recyclerViewClass.setHasFixedSize(true);
-        layoutManager = new LinearLayoutManager(this);
-        recyclerViewClass.setLayoutManager(layoutManager);
-
-        classAdapterClass = new ClassAdapter(this, classItems);
-        recyclerViewClass.setAdapter(classAdapterClass);
+        buttonSelectClass = findViewById(R.id.buttonSelectClass);
+//        buttonAddClasses = findViewById(R.id.buttonAddClasses);
+//        fabAddClass = findViewById(R.id.fabAddClass);
+//
+//        recyclerViewClass = findViewById(R.id.recyclerViewClass);
+//        recyclerViewClass.setHasFixedSize(true);
+//        layoutManager = new LinearLayoutManager(this);
+//        recyclerViewClass.setLayoutManager(layoutManager);
+//
+//        classAdapterClass = new ClassAdapter(this, classItems);
+//        recyclerViewClass.setAdapter(classAdapterClass);
 
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -101,36 +103,14 @@ public class StudentActivity extends AppCompatActivity {
             }
         });
 
-        buttonAddClasses.setOnClickListener(v -> showDialog());
-    }
-
-    private void  showDialog(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View view = LayoutInflater.from(this).inflate(R.layout.class_dialog, null);
-        builder.setView(view);
-        AlertDialog dialog = builder.create();
-        dialog.show();
-
-        class_edt = view.findViewById(R.id.editTextClassName);
-        CRNs_edit = view.findViewById(R.id.editTextCRNs);
-
-        Button cancel = view.findViewById(R.id.buttonCancel);
-        Button add = view.findViewById(R.id.buttonAdd);
-
-        cancel.setOnClickListener(v -> dialog.dismiss());
-        add.setOnClickListener(v -> {
-            addClass();
-            dialog.dismiss();
+        buttonSelectClass.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showSelectClassDialog();
+            }
         });
 
-
-    }
-
-    private void addClass() {
-        String className = class_edt.getText().toString();
-        int CRNs = Integer.parseInt(CRNs_edit.getText().toString());;
-        classItems.add(new ClassItem(className, CRNs));
-        classAdapterClass.notifyDataSetChanged();
+//        buttonAddClasses.setOnClickListener(v -> showDialog());
     }
 
     private void getAndUpdateLocation() {
@@ -162,6 +142,66 @@ public class StudentActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
+    private void showSelectClassDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select Class");
+
+        //
+        final List<String> classList = new ArrayList<>();
+        classList.add("Machine Learning 1234");
+        classList.add("Neural Network 1236");
+        classList.add("NLP 1235");
+        classList.add("Independent Study 1237");
+
+
+        String[] classArray = new String[classList.size()];
+        classList.toArray(classArray);
+
+        builder.setItems(classArray, (dialog, which) -> {
+            String selectedClass = classList.get(which);
+            Toast.makeText(StudentActivity.this, "Selected: " + selectedClass, Toast.LENGTH_SHORT).show();
+            //
+            Intent intent = new Intent(StudentActivity.this, ClassHomeActivity.class);
+            intent.putExtra("className", selectedClass);
+            startActivity(intent);
+        });
+
+        builder.create().show();
+    }
+
+
+
+//
+//    private void  showDialog(){
+//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//        View view = LayoutInflater.from(this).inflate(R.layout.class_dialog, null);
+//        builder.setView(view);
+//        AlertDialog dialog = builder.create();
+//        dialog.show();
+//
+//        class_edt = view.findViewById(R.id.editTextClassName);
+//        CRNs_edit = view.findViewById(R.id.editTextCRNs);
+//
+//        Button cancel = view.findViewById(R.id.buttonCancel);
+//        Button add = view.findViewById(R.id.buttonAdd);
+//
+//        cancel.setOnClickListener(v -> dialog.dismiss());
+//        add.setOnClickListener(v -> {
+//            addClass();
+//            dialog.dismiss();
+//        });
+//
+//
+//    }
+//
+//    private void addClass() {
+//        String className = class_edt.getText().toString();
+//        int CRNs = Integer.parseInt(CRNs_edit.getText().toString());;
+//        classItems.add(new ClassItem(className, CRNs));
+//        classAdapterClass.notifyDataSetChanged();
+//    }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
