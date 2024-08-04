@@ -162,7 +162,7 @@ public class RegisterActivity extends AppCompatActivity {
             String firstName = editTextFirstName.getText().toString();
             String lastName = editTextLastName.getText().toString();
 
-            if (!email.isEmpty() && !password.isEmpty() && selectedRoleId != -1 && email.toLowerCase().endsWith("mail.yu.edu")) {
+            if (!email.isEmpty() && !password.isEmpty() && selectedRoleId != -1 && email.toLowerCase().endsWith("yu.edu")) {
 
                 mAuth.createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {

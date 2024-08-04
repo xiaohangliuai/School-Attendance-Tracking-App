@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
             RadioButton radioButtonRole = findViewById(selectedRoleId);
             String role = radioButtonRole.getText().toString();
 
-            if (!email.isEmpty() && !password.isEmpty() && selectedRoleId != -1 && email.toLowerCase().endsWith("mail.yu.edu")) {
+            if (!email.isEmpty() && !password.isEmpty() && selectedRoleId != -1 && email.toLowerCase().endsWith("yu.edu")) {
 
                 mAuth.signInWithEmailAndPassword(email, password)
                         .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {

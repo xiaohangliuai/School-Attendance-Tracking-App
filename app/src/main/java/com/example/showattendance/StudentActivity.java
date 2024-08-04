@@ -1,6 +1,7 @@
 package com.example.showattendance;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -34,7 +35,7 @@ public class StudentActivity extends AppCompatActivity {
 
     private Spinner spinnerClasses;
     private TextView textViewSignInStatus;
-    private Button buttonSignIn;
+    private Button buttonSignIn, buttonSignOut;
 
     private FusedLocationProviderClient fusedLocationClient;
     private FirebaseAuth mAuth;
@@ -50,6 +51,7 @@ public class StudentActivity extends AppCompatActivity {
         spinnerClasses = findViewById(R.id.spinnerClasses);
         textViewSignInStatus = findViewById(R.id.textViewSignInStatus);
         buttonSignIn = findViewById(R.id.buttonSignIn);
+        buttonSignOut = findViewById(R.id.buttonSignOut);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         mAuth = FirebaseAuth.getInstance();
@@ -69,6 +71,17 @@ public class StudentActivity extends AppCompatActivity {
                 signInToClass();
             }
         });
+
+        buttonSignOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(StudentActivity.this, MainActivity.class);
+                startActivity(intent);
+
+            }
+        });
+
+
     }
 
     private void fetchClasses(ArrayAdapter<String> adapter) {
@@ -91,6 +104,7 @@ public class StudentActivity extends AppCompatActivity {
         });
     }
 
+
     private void signInToClass() {
         Log.d(TAG, "Attempting to get location");
         fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
@@ -105,15 +119,29 @@ public class StudentActivity extends AppCompatActivity {
                 FirebaseUser currentUser = mAuth.getCurrentUser();
                 if (currentUser != null) {
                     String userEmail = currentUser.getEmail();
-                    AttendanceRecord record = new AttendanceRecord(userEmail, selectedClass, gpsPoints);
-                    db.collection("Attendance").add(record).addOnSuccessListener(documentReference -> {
-                        Log.d(TAG, "Attendance record added: " + documentReference.getId());
-                        textViewSignInStatus.setText("Your GPS Address: " + gpsPoints + "\nYou have signed in successfully.");
-                        textViewSignInStatus.setVisibility(View.VISIBLE);
-                    }).addOnFailureListener(e -> {
-                        Log.e(TAG, "Failed to add attendance record", e);
-                        Toast.makeText(StudentActivity.this, "Sign in failed. Try again.", Toast.LENGTH_SHORT).show();
-                    });
+                    db.collection("Users").document(currentUser.getUid()).get()
+                            .addOnSuccessListener(documentSnapshot -> {
+                                if (documentSnapshot.exists()) {
+                                    String firstName = documentSnapshot.getString("firstName");
+                                    String lastName = documentSnapshot.getString("lastName");
+
+                                    AttendanceRecord record = new AttendanceRecord(userEmail, selectedClass, gpsPoints, firstName, lastName);
+                                    db.collection("Attendance").add(record).addOnSuccessListener(documentReference -> {
+                                        Log.d(TAG, "Attendance record added: " + documentReference.getId());
+                                        textViewSignInStatus.setText("Your GPS Address: " + gpsPoints + "\nYou have signed in " + selectedClass + " successfully.");
+                                        textViewSignInStatus.setVisibility(View.VISIBLE);
+                                    }).addOnFailureListener(e -> {
+                                        Log.e(TAG, "Failed to add attendance record", e);
+                                        Toast.makeText(StudentActivity.this, "Sign in failed. Try again.", Toast.LENGTH_SHORT).show();
+                                    });
+                                } else {
+                                    Log.e(TAG, "User document does not exist");
+                                    Toast.makeText(StudentActivity.this, "User information not found. Please contact support.", Toast.LENGTH_SHORT).show();
+                                }
+                            }).addOnFailureListener(e -> {
+                                Log.e(TAG, "Failed to fetch user information", e);
+                                Toast.makeText(StudentActivity.this, "Error fetching user information. Try again.", Toast.LENGTH_SHORT).show();
+                            });
                 } else {
                     Log.e(TAG, "User is not authenticated");
                     Toast.makeText(StudentActivity.this, "User not authenticated. Please log in again.", Toast.LENGTH_SHORT).show();
@@ -124,6 +152,40 @@ public class StudentActivity extends AppCompatActivity {
             }
         });
     }
+
+//    private void signInToClass() {
+//        Log.d(TAG, "Attempting to get location");
+//        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+//            if (location != null) {
+//                Log.d(TAG, "Location obtained: " + location.toString());
+//                String selectedClass = (String) spinnerClasses.getSelectedItem();
+//                double latitude = location.getLatitude();
+//                double longitude = location.getLongitude();
+//                String gpsPoints = latitude + ", " + longitude;
+//
+//                // Save attendance record to Firestore
+//                FirebaseUser currentUser = mAuth.getCurrentUser();
+//                if (currentUser != null) {
+//                    String userEmail = currentUser.getEmail();
+//                    AttendanceRecord record = new AttendanceRecord(userEmail, selectedClass, gpsPoints);
+//                    db.collection("Attendance").add(record).addOnSuccessListener(documentReference -> {
+//                        Log.d(TAG, "Attendance record added: " + documentReference.getId());
+//                        textViewSignInStatus.setText("Your GPS Address: " + gpsPoints + "\nYou have signed in successfully.");
+//                        textViewSignInStatus.setVisibility(View.VISIBLE);
+//                    }).addOnFailureListener(e -> {
+//                        Log.e(TAG, "Failed to add attendance record", e);
+//                        Toast.makeText(StudentActivity.this, "Sign in failed. Try again.", Toast.LENGTH_SHORT).show();
+//                    });
+//                } else {
+//                    Log.e(TAG, "User is not authenticated");
+//                    Toast.makeText(StudentActivity.this, "User not authenticated. Please log in again.", Toast.LENGTH_SHORT).show();
+//                }
+//            } else {
+//                Log.e(TAG, "Location is null");
+//                Toast.makeText(StudentActivity.this, "Could not get location. Try again.", Toast.LENGTH_SHORT).show();
+//            }
+//        });
+//    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {

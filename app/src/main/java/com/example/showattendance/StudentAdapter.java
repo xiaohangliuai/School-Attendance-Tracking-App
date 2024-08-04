@@ -9,6 +9,47 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
+//
+//public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentViewHolder> {
+//    private List<Student> studentList;
+//
+//    public StudentAdapter(List<Student> studentList) {
+//        this.studentList = studentList;
+//    }
+//
+//    @NonNull
+//    @Override
+//    public StudentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+//        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.student_item, parent, false);
+//        return new StudentViewHolder(itemView);
+//    }
+//
+//    @Override
+//    public void onBindViewHolder(@NonNull StudentViewHolder holder, int position) {
+//        Student student = studentList.get(position);
+//        holder.textViewName.setText(student.getName());
+//        holder.textViewGpsPoints.setText(student.getGpsPoints());
+//        holder.textViewDistance.setText(String.valueOf(student.getDistance()));
+//        holder.textViewAttendance.setText(student.getAttendance());
+//    }
+//
+//    @Override
+//    public int getItemCount() {
+//        return studentList.size();
+//    }
+//
+//    public static class StudentViewHolder extends RecyclerView.ViewHolder {
+//        public TextView textViewName, textViewGpsPoints, textViewDistance, textViewAttendance;
+//
+//        public StudentViewHolder(@NonNull View itemView) {
+//            super(itemView);
+//            textViewName = itemView.findViewById(R.id.textViewName);
+//            textViewGpsPoints = itemView.findViewById(R.id.textViewGpsPoints);
+//            textViewDistance = itemView.findViewById(R.id.textViewDistance);
+//            textViewAttendance = itemView.findViewById(R.id.textViewAttendance);
+//        }
+//    }
+//}
 
 public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentViewHolder> {
     private List<Student> studentList;
@@ -27,10 +68,10 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentV
     @Override
     public void onBindViewHolder(@NonNull StudentViewHolder holder, int position) {
         Student student = studentList.get(position);
-        holder.textViewName.setText(student.getName());
-        holder.textViewGpsPoints.setText(student.getGpsPoints());
-        holder.textViewDistance.setText(String.valueOf(student.getDistance()));
-        holder.textViewAttendance.setText(student.getAttendance());
+        holder.nameTextView.setText(student.getName());
+        holder.gpsTextView.setText(student.getGpsPoints());
+        holder.distanceTextView.setText(String.valueOf(student.getDistance()));
+        holder.attendanceTextView.setText(student.getAttendance());
     }
 
     @Override
@@ -39,15 +80,19 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentV
     }
 
     public static class StudentViewHolder extends RecyclerView.ViewHolder {
-        public TextView textViewName, textViewGpsPoints, textViewDistance, textViewAttendance;
+        public TextView nameTextView;
+        public TextView gpsTextView;
+        public TextView distanceTextView;
+        public TextView attendanceTextView;
 
-        public StudentViewHolder(@NonNull View itemView) {
+        public StudentViewHolder(View itemView) {
             super(itemView);
-            textViewName = itemView.findViewById(R.id.textViewName);
-            textViewGpsPoints = itemView.findViewById(R.id.textViewGpsPoints);
-            textViewDistance = itemView.findViewById(R.id.textViewDistance);
-            textViewAttendance = itemView.findViewById(R.id.textViewAttendance);
+            nameTextView = itemView.findViewById(R.id.textViewName);
+            gpsTextView = itemView.findViewById(R.id.textViewGpsPoints);
+            distanceTextView = itemView.findViewById(R.id.textViewDistance);
+            attendanceTextView = itemView.findViewById(R.id.textViewAttendance);
         }
     }
 }
+
 

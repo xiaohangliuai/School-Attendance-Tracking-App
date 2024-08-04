@@ -193,9 +193,191 @@
 
 
 
+//
+//package com.example.showattendance;
+//
+//
+//import android.Manifest;
+//import android.content.Intent;
+//import android.content.pm.PackageManager;
+//import android.location.Location;
+//import android.os.Bundle;
+//import android.util.Log;
+//import android.view.View;
+//import android.widget.ArrayAdapter;
+//import android.widget.Button;
+//import android.widget.Spinner;
+//import android.widget.TextView;
+//import android.widget.Toast;
+//
+//import androidx.annotation.NonNull;
+//import androidx.appcompat.app.AppCompatActivity;
+//import androidx.core.app.ActivityCompat;
+//import androidx.core.content.ContextCompat;
+//import androidx.recyclerview.widget.LinearLayoutManager;
+//import androidx.recyclerview.widget.RecyclerView;
+//
+//import com.google.android.gms.location.FusedLocationProviderClient;
+//import com.google.android.gms.location.LocationServices;
+//import com.google.android.gms.tasks.OnSuccessListener;
+//import com.google.firebase.auth.FirebaseAuth;
+//import com.google.firebase.firestore.FirebaseFirestore;
+//import com.google.firebase.firestore.QueryDocumentSnapshot;
+//
+//import java.util.ArrayList;
+//import java.util.List;
+//
+//
+//public class TeacherActivity extends AppCompatActivity {
+//
+//    private static final String TAG = "TeacherActivity";
+//    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1000;
+//
+//    private Button buttonShowStudents;
+//    private  Button buttonSignOut;
+//    private RecyclerView recyclerView;
+//    private TextView teacherGps;
+//
+//    private FusedLocationProviderClient fusedLocationClient;
+//    private FirebaseAuth mAuth;
+//    private FirebaseFirestore db;
+//
+//    private List<Student> studentList;
+//    private StudentAdapter studentAdapter;
+//    private List<String> classList;
+//    private Spinner spinnerClasses;
+//
+//    @Override
+//    protected void onCreate(Bundle savedInstanceState) {
+//        super.onCreate(savedInstanceState);
+//        setContentView(R.layout.activity_teacher);
+//
+//        Log.d(TAG, "onCreate: Initializing views");
+//
+//        buttonShowStudents = findViewById(R.id.buttonShowStudents);
+//        recyclerView = findViewById(R.id.recyclerView);
+//        teacherGps = findViewById(R.id.textViewTeacherGps);
+//        buttonSignOut = findViewById(R.id.buttonSignOut);
+//        spinnerClasses = findViewById(R.id.spinnerClasses);
+//
+//        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+//        mAuth = FirebaseAuth.getInstance();
+//        db = FirebaseFirestore.getInstance();
+//
+//        studentList = new ArrayList<>();
+//        studentAdapter = new StudentAdapter(studentList);
+//        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+//        recyclerView.setAdapter(studentAdapter);
+//
+//        classList = new ArrayList<>();
+//        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, classList);
+//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//        spinnerClasses.setAdapter(adapter);
+//
+//        fetchClasses(adapter);
+//
+//        buttonShowStudents.setOnClickListener(v -> {
+//            Log.d(TAG, "Show Students button clicked");
+//            if (ContextCompat.checkSelfPermission(TeacherActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//                ActivityCompat.requestPermissions(TeacherActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+//            } else {
+//                getInformation();
+//            }
+//        });
+//
+//        buttonSignOut.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Intent intent = new Intent(TeacherActivity.this, MainActivity.class);
+//                startActivity(intent);
+//
+//            }
+//        });
+//    }
+//
+//    private void fetchClasses(ArrayAdapter<String> adapter) {
+//        db.collection("Classes").get().addOnCompleteListener(task -> {
+//            if (task.isSuccessful()) {
+//                classList.clear();
+//                for (QueryDocumentSnapshot document : task.getResult()) {
+//                    String className = document.getString("name");
+//                    classList.add(className);
+//                }
+//                adapter.notifyDataSetChanged();
+//            } else {
+//                Log.e(TAG, "Error fetching classes: ", task.getException());
+////                Toast.makeText(StudentActivity.this, "Failed to fetch classes", Toast.LENGTH_SHORT).show();
+//            }
+//        });
+//    }
+//
+//    private void getInformation() {
+//        Log.d(TAG, "Getting information...");
+//        try {
+//            fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+//                if (location != null) {
+//                    double teacherLatitude = location.getLatitude();
+//                    double teacherLongitude = location.getLongitude();
+//                    teacherGps.setText("Latitude: " + teacherLatitude + ", Longitude: " + teacherLongitude);
+//                    Log.d(TAG, "Teacher location: " + teacherLatitude + ", " + teacherLongitude);
+//                    fetchStudentData(teacherLatitude, teacherLongitude);
+//                } else {
+//                    Log.e(TAG, "Location is null");
+//                }
+//            });
+//        } catch (SecurityException e) {
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    private void fetchStudentData(double teacherLatitude, double teacherLongitude) {
+//        Log.d(TAG, "Fetching student data...");
+//        db.collection("Users").whereEqualTo("role", "Student").get()
+//                .addOnCompleteListener(task -> {
+//                    if (task.isSuccessful()) {
+//                        studentList.clear();
+//                        for (QueryDocumentSnapshot document : task.getResult()) {
+//                            User user = document.toObject(User.class);
+//                            String gpsPoints = user.getGpsPoints();
+//                            if (gpsPoints != null && !gpsPoints.isEmpty()) {
+//                                String[] gpsPointsArray = gpsPoints.split(", ");
+//                                double studentLatitude = Double.parseDouble(gpsPointsArray[0]);
+//                                double studentLongitude = Double.parseDouble(gpsPointsArray[1]);
+//
+//                                float[] results = new float[1];
+//                                Location.distanceBetween(teacherLatitude, teacherLongitude, studentLatitude, studentLongitude, results);
+//                                double distance = results[0];
+//                                distance = Math.round(distance * 100.0) / 100.0;
+//                                String attendance = distance < 10 ? "Present" : "Absent";
+//
+//                                studentList.add(new Student(user.getEmail(), gpsPoints, distance, attendance));
+//                                Log.d(TAG, "Student added: " + user.getEmail() + ", " + gpsPoints + ", " + distance + ", " + attendance);
+//                            } else {
+//                                Log.d(TAG, "Student " + user.getEmail() + " has no GPS points");
+//                            }
+//                        }
+//                        studentAdapter.notifyDataSetChanged();
+//                    } else {
+//                        Log.e(TAG, "Error getting documents: ", task.getException());
+//                        Toast.makeText(TeacherActivity.this, "Failed to fetch student data", Toast.LENGTH_SHORT).show();
+//                    }
+//                });
+//    }
+//
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+//        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+//            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                getInformation();
+//            } else {
+//                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
+//            }
+//        }
+//    }
+//}
+
 
 package com.example.showattendance;
-
 
 import android.Manifest;
 import android.content.Intent;
@@ -227,14 +409,13 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class TeacherActivity extends AppCompatActivity {
 
     private static final String TAG = "TeacherActivity";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1000;
 
     private Button buttonShowStudents;
-    private  Button buttonSignOut;
+    private Button buttonSignOut;
     private RecyclerView recyclerView;
     private TextView teacherGps;
 
@@ -285,13 +466,9 @@ public class TeacherActivity extends AppCompatActivity {
             }
         });
 
-        buttonSignOut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(TeacherActivity.this, MainActivity.class);
-                startActivity(intent);
-
-            }
+        buttonSignOut.setOnClickListener(v -> {
+            Intent intent = new Intent(TeacherActivity.this, MainActivity.class);
+            startActivity(intent);
         });
     }
 
@@ -306,7 +483,6 @@ public class TeacherActivity extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
             } else {
                 Log.e(TAG, "Error fetching classes: ", task.getException());
-//                Toast.makeText(StudentActivity.this, "Failed to fetch classes", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -332,13 +508,19 @@ public class TeacherActivity extends AppCompatActivity {
 
     private void fetchStudentData(double teacherLatitude, double teacherLongitude) {
         Log.d(TAG, "Fetching student data...");
-        db.collection("Users").whereEqualTo("role", "Student").get()
+        String selectedClass = (String) spinnerClasses.getSelectedItem();
+        Log.d(TAG, "Selected class: " + selectedClass);
+
+        db.collection("Attendance").whereEqualTo("className", selectedClass).get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         studentList.clear();
                         for (QueryDocumentSnapshot document : task.getResult()) {
-                            User user = document.toObject(User.class);
-                            String gpsPoints = user.getGpsPoints();
+                            String userEmail = document.getString("email");
+                            String firstName = document.getString("firstName");
+                            String lastName = document.getString("lastName");
+                            String gpsPoints = document.getString("gpsPoints");
+
                             if (gpsPoints != null && !gpsPoints.isEmpty()) {
                                 String[] gpsPointsArray = gpsPoints.split(", ");
                                 double studentLatitude = Double.parseDouble(gpsPointsArray[0]);
@@ -346,34 +528,23 @@ public class TeacherActivity extends AppCompatActivity {
 
                                 float[] results = new float[1];
                                 Location.distanceBetween(teacherLatitude, teacherLongitude, studentLatitude, studentLongitude, results);
-                                double distance = results[0];
-                                distance = Math.round(distance * 100.0) / 100.0;
+                                double distance = Math.round(results[0] * 100.0) / 100.0;
                                 String attendance = distance < 10 ? "Present" : "Absent";
 
-                                studentList.add(new Student(user.getEmail(), gpsPoints, distance, attendance));
-                                Log.d(TAG, "Student added: " + user.getEmail() + ", " + gpsPoints + ", " + distance + ", " + attendance);
+                                String fullName = firstName + " " + lastName;
+                                studentList.add(new Student(fullName, gpsPoints, distance, attendance));
+                                Log.d(TAG, "Student added: " + fullName + ", " + gpsPoints + ", " + distance + ", " + attendance);
                             } else {
-                                Log.d(TAG, "Student " + user.getEmail() + " has no GPS points");
+                                Log.d(TAG, "Student " + userEmail + " has no GPS points");
                             }
                         }
                         studentAdapter.notifyDataSetChanged();
                     } else {
-                        Log.e(TAG, "Error getting documents: ", task.getException());
+                        Log.e(TAG, "Error getting attendance records: ", task.getException());
                         Toast.makeText(TeacherActivity.this, "Failed to fetch student data", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getInformation();
-            } else {
-                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
 }
-//
-//
+
+
