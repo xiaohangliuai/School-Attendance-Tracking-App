@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -22,6 +23,7 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -42,6 +44,8 @@ public class StudentActivity extends AppCompatActivity {
     private FirebaseFirestore db;
 
     private List<String> classList;
+    private List<String> selectedClasses;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +66,8 @@ public class StudentActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerClasses.setAdapter(adapter);
 
-        fetchClasses(adapter);
+        // Fetch user-specific classes
+        fetchUserClasses(adapter);
 
         buttonSignIn.setOnClickListener(v -> {
             if (ContextCompat.checkSelfPermission(StudentActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -72,31 +77,65 @@ public class StudentActivity extends AppCompatActivity {
             }
         });
 
-        buttonSignOut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(StudentActivity.this, MainActivity.class);
-                startActivity(intent);
-
-            }
+        buttonSignOut.setOnClickListener(v -> {
+            Intent intent = new Intent(StudentActivity.this, MainActivity.class);
+            startActivity(intent);
         });
-
-
     }
 
-    private void fetchClasses(ArrayAdapter<String> adapter) {
-        Log.d(TAG, "Fetching classes from Firestore");
+    private void fetchUserClasses(ArrayAdapter<String> adapter) {
+        Log.d(TAG, "Fetching user classes from Firestore");
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            db.collection("Users").document(currentUser.getUid()).get()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            classList.clear();
+                            DocumentSnapshot document = task.getResult();
+                            if (document.exists()) {
+                                List<String> userClasses = (List<String>) document.get("Classes");
+                                if (userClasses != null && !userClasses.isEmpty()) {
+                                    classList.addAll(userClasses);
+                                    Log.d(TAG, "User classes fetched successfully: " + classList);
+                                    adapter.notifyDataSetChanged();
+                                } else {
+                                    Log.d(TAG, "No classes registered for the user. Fetching all classes.");
+                                    fetchClassesAndShowDialog(adapter);
+                                }
+                            } else {
+                                Log.e(TAG, "No such document");
+                                Toast.makeText(StudentActivity.this, "No registered classes found", Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+                            Log.e(TAG, "Error fetching user classes: ", task.getException());
+                            Toast.makeText(StudentActivity.this, "Failed to fetch user classes", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        } else {
+            Log.e(TAG, "User is not authenticated");
+            Toast.makeText(StudentActivity.this, "User not authenticated. Please log in again.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void fetchClassesAndShowDialog(ArrayAdapter<String> adapter) {
+        Log.d(TAG, "Fetching all possible classes from Firestore");
         db.collection("Classes").get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
-                classList.clear();
+                List<String> allClasses = new ArrayList<>();
                 for (QueryDocumentSnapshot document : task.getResult()) {
                     String className = document.getString("name");
                     if (className != null) {
-                        classList.add(className);
+                        allClasses.add(className);
                     }
                 }
-                Log.d(TAG, "Classes fetched successfully: " + classList);
-                adapter.notifyDataSetChanged();
+                Log.d(TAG, "All classes fetched successfully: " + allClasses);
+
+                // Save allClasses to be used in dialog
+                classList.clear();
+                classList.addAll(allClasses);
+
+                // Show class selection dialog
+                showClassSelectionDialog(adapter);
             } else {
                 Log.e(TAG, "Error fetching classes: ", task.getException());
                 Toast.makeText(StudentActivity.this, "Failed to fetch classes", Toast.LENGTH_SHORT).show();
@@ -104,6 +143,62 @@ public class StudentActivity extends AppCompatActivity {
         });
     }
 
+    private void showClassSelectionDialog(ArrayAdapter<String> adapter) {
+        if (classList.isEmpty()) {
+            // Classes not loaded yet, skip dialog
+            Toast.makeText(StudentActivity.this, "No classes available to select.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select Your Classes");
+
+        String[] classArray = classList.toArray(new String[0]);
+        boolean[] checkedItems = new boolean[classArray.length];
+        ArrayList<String> selectedItems = new ArrayList<>();
+
+        builder.setMultiChoiceItems(classArray, checkedItems, (dialog, which, isChecked) -> {
+            if (isChecked) {
+                selectedItems.add(classArray[which]);
+            } else {
+                selectedItems.remove(classArray[which]);
+            }
+        });
+
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            if (selectedItems.size() == 3) {
+                saveSelectedClasses(selectedItems);
+            } else {
+                Toast.makeText(StudentActivity.this, "Please select exactly 3 classes", Toast.LENGTH_SHORT).show();
+                showClassSelectionDialog(adapter);
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        builder.create().show();
+    }
+
+    private void saveSelectedClasses(List<String> selectedClasses) {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            db.collection("Users").document(currentUser.getUid()).update("Classes", selectedClasses)
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d(TAG, "Classes updated successfully");
+                        this.selectedClasses = new ArrayList<>(selectedClasses);
+                        Toast.makeText(StudentActivity.this, "Classes selected successfully", Toast.LENGTH_SHORT).show();
+                        // Refresh user classes after saving
+                        fetchUserClasses(new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, classList));
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Error updating classes", e);
+                        Toast.makeText(StudentActivity.this, "Failed to update classes", Toast.LENGTH_SHORT).show();
+                    });
+        } else {
+            Log.e(TAG, "User is not authenticated");
+            Toast.makeText(StudentActivity.this, "User not authenticated. Please log in again.", Toast.LENGTH_SHORT).show();
+        }
+    }
 
     private void signInToClass() {
         Log.d(TAG, "Attempting to get location");
@@ -153,39 +248,6 @@ public class StudentActivity extends AppCompatActivity {
         });
     }
 
-//    private void signInToClass() {
-//        Log.d(TAG, "Attempting to get location");
-//        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
-//            if (location != null) {
-//                Log.d(TAG, "Location obtained: " + location.toString());
-//                String selectedClass = (String) spinnerClasses.getSelectedItem();
-//                double latitude = location.getLatitude();
-//                double longitude = location.getLongitude();
-//                String gpsPoints = latitude + ", " + longitude;
-//
-//                // Save attendance record to Firestore
-//                FirebaseUser currentUser = mAuth.getCurrentUser();
-//                if (currentUser != null) {
-//                    String userEmail = currentUser.getEmail();
-//                    AttendanceRecord record = new AttendanceRecord(userEmail, selectedClass, gpsPoints);
-//                    db.collection("Attendance").add(record).addOnSuccessListener(documentReference -> {
-//                        Log.d(TAG, "Attendance record added: " + documentReference.getId());
-//                        textViewSignInStatus.setText("Your GPS Address: " + gpsPoints + "\nYou have signed in successfully.");
-//                        textViewSignInStatus.setVisibility(View.VISIBLE);
-//                    }).addOnFailureListener(e -> {
-//                        Log.e(TAG, "Failed to add attendance record", e);
-//                        Toast.makeText(StudentActivity.this, "Sign in failed. Try again.", Toast.LENGTH_SHORT).show();
-//                    });
-//                } else {
-//                    Log.e(TAG, "User is not authenticated");
-//                    Toast.makeText(StudentActivity.this, "User not authenticated. Please log in again.", Toast.LENGTH_SHORT).show();
-//                }
-//            } else {
-//                Log.e(TAG, "Location is null");
-//                Toast.makeText(StudentActivity.this, "Could not get location. Try again.", Toast.LENGTH_SHORT).show();
-//            }
-//        });
-//    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -203,220 +265,3 @@ public class StudentActivity extends AppCompatActivity {
 
 
 
-
-//package com.example.showattendance;
-//
-//
-//import static android.content.ContentValues.TAG;
-//
-//import android.Manifest;
-//import android.content.Intent;
-//import android.content.pm.PackageManager;
-//import android.location.Location;
-//import android.net.Uri;
-//import android.os.Bundle;
-//import android.util.Log;
-//import android.view.LayoutInflater;
-//import android.view.View;
-//import android.widget.Button;
-//import android.widget.EditText;
-//import android.widget.TextView;
-//import android.widget.Toast;
-//
-//import androidx.annotation.NonNull;
-//import androidx.appcompat.app.AlertDialog;
-//import androidx.appcompat.app.AppCompatActivity;
-//import androidx.core.app.ActivityCompat;
-//import androidx.core.content.ContextCompat;
-//import androidx.recyclerview.widget.LinearLayoutManager;
-//import androidx.recyclerview.widget.RecyclerView;
-//
-//import com.google.android.gms.common.internal.safeparcel.SafeParcelable;
-//import com.google.android.gms.location.FusedLocationProviderClient;
-//import com.google.android.gms.location.LocationServices;
-//import com.google.android.gms.tasks.OnCompleteListener;
-//import com.google.android.gms.tasks.OnSuccessListener;
-//import com.google.android.gms.tasks.Task;
-//import com.google.android.material.floatingactionbutton.FloatingActionButton;
-//import com.google.firebase.auth.FirebaseAuth;
-//import com.google.firebase.auth.FirebaseUser;
-//import com.google.firebase.auth.UserProfileChangeRequest;
-//import com.google.firebase.firestore.FirebaseFirestore;
-//
-//import java.util.ArrayList;
-//import java.util.HashMap;
-//import java.util.List;
-//import java.util.Map;
-//
-//public class StudentActivity extends AppCompatActivity {
-//    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
-//
-//    private TextView textViewLocation;
-//    private Button buttonShowLocation, buttonAddClasses;
-//    private FusedLocationProviderClient fusedLocationClient;
-//    private FirebaseAuth mAuth;
-//    private FirebaseFirestore db;
-//    private Button buttonSignOut, buttonSelectClass;
-//
-//    private FloatingActionButton fabAddClass;
-//    private RecyclerView recyclerViewClass;
-//    ClassAdapter classAdapterClass;
-//    RecyclerView.LayoutManager layoutManager;
-//    ArrayList<ClassItem> classItems = new ArrayList<>();
-//    EditText class_edt;
-//    EditText CRNs_edit;
-//
-//    @Override
-//    protected void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_student);
-//
-//        textViewLocation = findViewById(R.id.textViewLocation);
-//        buttonShowLocation = findViewById(R.id.buttonShowLocation);
-//        buttonSignOut = findViewById(R.id.buttonSignOut);
-//        buttonSelectClass = findViewById(R.id.buttonSelectClass);
-////        buttonAddClasses = findViewById(R.id.buttonAddClasses);
-////        fabAddClass = findViewById(R.id.fabAddClass);
-////
-////        recyclerViewClass = findViewById(R.id.recyclerViewClass);
-////        recyclerViewClass.setHasFixedSize(true);
-////        layoutManager = new LinearLayoutManager(this);
-////        recyclerViewClass.setLayoutManager(layoutManager);
-////
-////        classAdapterClass = new ClassAdapter(this, classItems);
-////        recyclerViewClass.setAdapter(classAdapterClass);
-//
-//
-//        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-//        mAuth = FirebaseAuth.getInstance();
-//        db = FirebaseFirestore.getInstance();
-//
-//        buttonShowLocation.setOnClickListener(v -> {
-//            if (ContextCompat.checkSelfPermission(StudentActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//                ActivityCompat.requestPermissions(StudentActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
-//            } else {
-//                getAndUpdateLocation();
-//            }
-//        });
-//
-//
-//        buttonSignOut.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Intent intent = new Intent(StudentActivity.this, MainActivity.class);
-//                startActivity(intent);
-//
-//            }
-//        });
-//
-//        buttonSelectClass.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                showSelectClassDialog();
-//            }
-//        });
-//
-////        buttonAddClasses.setOnClickListener(v -> showDialog());
-//    }
-//
-//    private void getAndUpdateLocation() {
-//        try {
-//            fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
-//                if (location != null) {
-//                    double latitude = location.getLatitude();
-//                    double longitude = location.getLongitude();
-//                    String gpsPoints = latitude + ", " + longitude;
-//                    textViewLocation.setText(gpsPoints);
-//
-//                    FirebaseUser user = mAuth.getCurrentUser();
-//
-//                    Map<String, Object> updates = new HashMap<>();
-//                    updates.put("gpsPoints", gpsPoints);
-//
-//                    db.collection("Users").document(user.getUid())
-//                            .update(updates)
-//                            .addOnCompleteListener(task -> {
-//                                if (task.isSuccessful()) {
-//                                    Log.d(TAG, "User GPS points updated.");
-//                                } else {
-//                                    Log.e(TAG, "Error updating GPS points", task.getException());
-//                                }
-//                            });
-//                }
-//            });
-//        } catch (SecurityException e) {
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    private void showSelectClassDialog() {
-//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//        builder.setTitle("Select Class");
-//
-//        //
-//        final List<String> classList = new ArrayList<>();
-//        classList.add("Machine Learning 1234");
-//        classList.add("Neural Network 1236");
-//        classList.add("NLP 1235");
-//        classList.add("Independent Study 1237");
-//
-//
-//        String[] classArray = new String[classList.size()];
-//        classList.toArray(classArray);
-//
-//        builder.setItems(classArray, (dialog, which) -> {
-//            String selectedClass = classList.get(which);
-//            Toast.makeText(StudentActivity.this, "Selected: " + selectedClass, Toast.LENGTH_SHORT).show();
-//            //
-//            Intent intent = new Intent(StudentActivity.this, ClassHomeActivity.class);
-//            intent.putExtra("className", selectedClass);
-//            startActivity(intent);
-//        });
-//
-//        builder.create().show();
-//    }
-//
-//
-//
-////
-////    private void  showDialog(){
-////        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-////        View view = LayoutInflater.from(this).inflate(R.layout.class_dialog, null);
-////        builder.setView(view);
-////        AlertDialog dialog = builder.create();
-////        dialog.show();
-////
-////        class_edt = view.findViewById(R.id.editTextClassName);
-////        CRNs_edit = view.findViewById(R.id.editTextCRNs);
-////
-////        Button cancel = view.findViewById(R.id.buttonCancel);
-////        Button add = view.findViewById(R.id.buttonAdd);
-////
-////        cancel.setOnClickListener(v -> dialog.dismiss());
-////        add.setOnClickListener(v -> {
-////            addClass();
-////            dialog.dismiss();
-////        });
-////
-////
-////    }
-////
-////    private void addClass() {
-////        String className = class_edt.getText().toString();
-////        int CRNs = Integer.parseInt(CRNs_edit.getText().toString());;
-////        classItems.add(new ClassItem(className, CRNs));
-////        classAdapterClass.notifyDataSetChanged();
-////    }
-//
-//
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-//        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-//            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                getAndUpdateLocation();
-//            } else {
-//                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
-//            }
-//        }
-//    }
-//}
