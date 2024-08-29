@@ -187,8 +187,16 @@ public class StudentActivity extends AppCompatActivity {
                         Log.d(TAG, "Classes updated successfully");
                         this.selectedClasses = new ArrayList<>(selectedClasses);
                         Toast.makeText(StudentActivity.this, "Classes selected successfully", Toast.LENGTH_SHORT).show();
+
+                        // Update classList and refresh the spinner
+                        classList.clear();
+                        classList.addAll(selectedClasses);
+                        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, classList);
+                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        spinnerClasses.setAdapter(adapter);
+
                         // Refresh user classes after saving
-                        fetchUserClasses(new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, classList));
+                        fetchUserClasses(adapter);
                     })
                     .addOnFailureListener(e -> {
                         Log.e(TAG, "Error updating classes", e);
@@ -199,6 +207,7 @@ public class StudentActivity extends AppCompatActivity {
             Toast.makeText(StudentActivity.this, "User not authenticated. Please log in again.", Toast.LENGTH_SHORT).show();
         }
     }
+
 
     private void signInToClass() {
         Log.d(TAG, "Attempting to get location");

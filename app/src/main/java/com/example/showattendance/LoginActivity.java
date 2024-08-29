@@ -50,24 +50,31 @@ public class LoginActivity extends AppCompatActivity {
             RadioButton radioButtonRole = findViewById(selectedRoleId);
             String role = radioButtonRole.getText().toString();
 
-            if (!email.isEmpty() && !password.isEmpty() && selectedRoleId != -1) {
-
+            if (!email.isEmpty() && !password.isEmpty() && selectedRoleId != -1 && email.toLowerCase().endsWith("yu.edu")) {
                 mAuth.signInWithEmailAndPassword(email, password)
                         .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                             @Override
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 if (task.isSuccessful()) {
-
+                                    // Login success
                                     Log.d(TAG, "signInWithEmail:success");
                                     FirebaseUser firebaseUser = mAuth.getCurrentUser();
-                                    if (role.equals("Student")) {
-                                        Intent intent = new Intent(LoginActivity.this, StudentActivity.class);
-                                        startActivity(intent);
-                                        finish();
-                                    } else if (role.equals("Teacher")) {
-                                        Intent intent = new Intent(LoginActivity.this, TeacherActivity.class);
-                                        startActivity(intent);
-                                        finish();
+
+                                    if (firebaseUser != null && firebaseUser.isEmailVerified()) {
+                                        // Email is verified, proceed with role-based navigation
+                                        if (role.equals("Student")) {
+                                            Intent intent = new Intent(LoginActivity.this, StudentActivity.class);
+                                            startActivity(intent);
+                                            finish();
+                                        } else if (role.equals("Teacher")) {
+                                            Intent intent = new Intent(LoginActivity.this, TeacherActivity.class);
+                                            startActivity(intent);
+                                            finish();
+                                        }
+                                    } else {
+                                        // Email is not verified, prompt user to verify email
+                                        mAuth.signOut();
+                                        Toast.makeText(LoginActivity.this, "Please verify your email before logging in.", Toast.LENGTH_LONG).show();
                                     }
 
                                 } else {
@@ -75,10 +82,10 @@ public class LoginActivity extends AppCompatActivity {
                                     Log.w(TAG, "signInWithEmail:failure", task.getException());
                                     Toast.makeText(LoginActivity.this, "Authentication failed.",
                                             Toast.LENGTH_SHORT).show();
-
                                 }
                             }
                         });
+
             } else {
                 Toast.makeText(LoginActivity.this, "Please fill all fields", Toast.LENGTH_SHORT).show();
             }

@@ -1,202 +1,5 @@
-//import android.Manifest;
-//import android.content.Intent;
-//import android.content.pm.PackageManager;
-//import android.location.Location;
-//import android.os.Bundle;
-//import android.util.Log;
-//import android.view.View;
-//import android.widget.AdapterView;
-//import android.widget.ArrayAdapter;
-//import android.widget.Button;
-//import android.widget.Spinner;
-//import android.widget.TextView;
-//import android.widget.Toast;
-//
-//import androidx.annotation.NonNull;
-//import androidx.appcompat.app.AppCompatActivity;
-//import androidx.core.app.ActivityCompat;
-//import androidx.core.content.ContextCompat;
-//import androidx.recyclerview.widget.LinearLayoutManager;
-//import androidx.recyclerview.widget.RecyclerView;
-//
-//import com.example.showattendance.MainActivity;
-//import com.example.showattendance.R;
-//import com.example.showattendance.Student;
-//import com.example.showattendance.StudentAdapter;
-//import com.google.android.gms.location.FusedLocationProviderClient;
-//import com.google.android.gms.location.LocationServices;
-//import com.google.android.gms.tasks.OnSuccessListener;
-//import com.google.firebase.auth.FirebaseAuth;
-//import com.google.firebase.firestore.FirebaseFirestore;
-//import com.google.firebase.firestore.QueryDocumentSnapshot;
-//
-//import java.util.ArrayList;
-//import java.util.List;
-//
-//public class TeacherActivity extends AppCompatActivity {
-//
-//    private static final String TAG = "TeacherActivity";
-//    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1000;
-//
-//    private Spinner spinnerClasses;
-//    private Button buttonShowStudents;
-//    private Button buttonSignOut;
-//    private RecyclerView recyclerView;
-//    private TextView teacherGps;
-//
-//    private FusedLocationProviderClient fusedLocationClient;
-//    private FirebaseAuth mAuth;
-//    private FirebaseFirestore db;
-//
-//    private List<Student> studentList;
-//    private StudentAdapter studentAdapter;
-//
-//    @Override
-//    protected void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_teacher);
-//
-//        Log.d(TAG, "onCreate: Initializing views");
-//
-//        spinnerClasses = findViewById(R.id.spinnerClasses);
-//        buttonShowStudents = findViewById(R.id.buttonShowStudents);
-//        recyclerView = findViewById(R.id.recyclerView);
-//        teacherGps = findViewById(R.id.textViewTeacherGps);
-//        buttonSignOut = findViewById(R.id.buttonSignOut);
-//
-//        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-//        mAuth = FirebaseAuth.getInstance();
-//        db = FirebaseFirestore.getInstance();
-//
-//        studentList = new ArrayList<>();
-//        studentAdapter = new StudentAdapter(studentList);
-//        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-//        recyclerView.setAdapter(studentAdapter);
-//
-//        loadCourses();
-//
-//        spinnerClasses.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//            @Override
-//            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-//                String selectedClass = (String) parent.getItemAtPosition(position);
-//                fetchStudentData(selectedClass);
-//            }
-//
-//            @Override
-//            public void onNothingSelected(AdapterView<?> parent) {
-//                // Handle case when no item is selected
-//            }
-//        });
-//
-//        buttonShowStudents.setOnClickListener(v -> {
-//            if (ContextCompat.checkSelfPermission(TeacherActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//                ActivityCompat.requestPermissions(TeacherActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
-//            } else {
-//                getInformation();
-//            }
-//        });
-//
-//        buttonSignOut.setOnClickListener(v -> {
-//            Intent intent = new Intent(TeacherActivity.this, MainActivity.class);
-//            startActivity(intent);
-//        });
-//    }
-//
-//    private void loadCourses() {
-//        db.collection("Courses").get().addOnCompleteListener(task -> {
-//            if (task.isSuccessful()) {
-//                List<String> courses = new ArrayList<>();
-//                for (QueryDocumentSnapshot document : task.getResult()) {
-//                    String courseName = document.getString("className");
-//                    if (courseName != null) {
-//                        courses.add(courseName);
-//                    }
-//                }
-//                ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-//                        android.R.layout.simple_spinner_item, courses);
-//                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-//                spinnerClasses.setAdapter(adapter);
-//            } else {
-//                Toast.makeText(TeacherActivity.this, "Failed to load courses", Toast.LENGTH_SHORT).show();
-//            }
-//        });
-//    }
-//
-//    private void getInformation() {
-//        Log.d(TAG, "Getting information...");
-//        try {
-//            fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
-//                if (location != null) {
-//                    double teacherLatitude = location.getLatitude();
-//                    double teacherLongitude = location.getLongitude();
-//                    teacherGps.setText("Latitude: " + teacherLatitude + ", Longitude: " + teacherLongitude);
-//                    Log.d(TAG, "Teacher location: " + teacherLatitude + ", " + teacherLongitude);
-//                    fetchStudentData(spinnerClasses.getSelectedItem().toString());
-//                } else {
-//                    Log.e(TAG, "Location is null");
-//                }
-//            });
-//        } catch (SecurityException e) {
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    private void fetchStudentData(String selectedClass) {
-//        Log.d(TAG, "Fetching student data...");
-//        db.collection("Attendance").whereEqualTo("className", selectedClass).get()
-//                .addOnCompleteListener(task -> {
-//                    if (task.isSuccessful()) {
-//                        studentList.clear();
-//                        for (QueryDocumentSnapshot document : task.getResult()) {
-//                            String email = document.getString("email");
-//                            String gpsPoints = document.getString("gpsPoints");
-//                            if (email != null && gpsPoints != null) {
-//                                String[] gpsPointsArray = gpsPoints.split(", ");
-//                                double studentLatitude = Double.parseDouble(gpsPointsArray[0]);
-//                                double studentLongitude = Double.parseDouble(gpsPointsArray[1]);
-//
-//                                float[] results = new float[1];
-//                                Location.distanceBetween(teacherLatitude, teacherLongitude, studentLatitude, studentLongitude, results);
-//                                double distance = results[0];
-//                                distance = Math.round(distance * 100.0) / 100.0;
-//                                String attendance = distance < 10 ? "Present" : "Absent";
-//
-//                                studentList.add(new Student(email, gpsPoints, distance, attendance));
-//                                Log.d(TAG, "Student added: " + email + ", " + gpsPoints + ", " + distance + ", " + attendance);
-//                            } else {
-//                                Log.d(TAG, "Student " + email + " has no GPS points");
-//                            }
-//                        }
-//                        studentAdapter.notifyDataSetChanged();
-//                    } else {
-//                        Log.e(TAG, "Error getting documents: ", task.getException());
-//                        Toast.makeText(TeacherActivity.this, "Failed to fetch student data", Toast.LENGTH_SHORT).show();
-//                    }
-//                });
-//    }
-//
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-//        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-//            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                getInformation();
-//            } else {
-//                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
-//            }
-//        }
-//    }
-//}
-//
-//
-
-
-
-
-
-//
 //package com.example.showattendance;
 //
-//
 //import android.Manifest;
 //import android.content.Intent;
 //import android.content.pm.PackageManager;
@@ -227,14 +30,13 @@
 //import java.util.ArrayList;
 //import java.util.List;
 //
-//
 //public class TeacherActivity extends AppCompatActivity {
 //
 //    private static final String TAG = "TeacherActivity";
 //    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1000;
 //
 //    private Button buttonShowStudents;
-//    private  Button buttonSignOut;
+//    private Button buttonSignOut;
 //    private RecyclerView recyclerView;
 //    private TextView teacherGps;
 //
@@ -285,13 +87,9 @@
 //            }
 //        });
 //
-//        buttonSignOut.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Intent intent = new Intent(TeacherActivity.this, MainActivity.class);
-//                startActivity(intent);
-//
-//            }
+//        buttonSignOut.setOnClickListener(v -> {
+//            Intent intent = new Intent(TeacherActivity.this, MainActivity.class);
+//            startActivity(intent);
 //        });
 //    }
 //
@@ -306,7 +104,6 @@
 //                adapter.notifyDataSetChanged();
 //            } else {
 //                Log.e(TAG, "Error fetching classes: ", task.getException());
-////                Toast.makeText(StudentActivity.this, "Failed to fetch classes", Toast.LENGTH_SHORT).show();
 //            }
 //        });
 //    }
@@ -332,13 +129,19 @@
 //
 //    private void fetchStudentData(double teacherLatitude, double teacherLongitude) {
 //        Log.d(TAG, "Fetching student data...");
-//        db.collection("Users").whereEqualTo("role", "Student").get()
+//        String selectedClass = (String) spinnerClasses.getSelectedItem();
+//        Log.d(TAG, "Selected class: " + selectedClass);
+//
+//        db.collection("Attendance").whereEqualTo("className", selectedClass).get()
 //                .addOnCompleteListener(task -> {
 //                    if (task.isSuccessful()) {
 //                        studentList.clear();
 //                        for (QueryDocumentSnapshot document : task.getResult()) {
-//                            User user = document.toObject(User.class);
-//                            String gpsPoints = user.getGpsPoints();
+//                            String userEmail = document.getString("email");
+//                            String firstName = document.getString("firstName");
+//                            String lastName = document.getString("lastName");
+//                            String gpsPoints = document.getString("gpsPoints");
+//
 //                            if (gpsPoints != null && !gpsPoints.isEmpty()) {
 //                                String[] gpsPointsArray = gpsPoints.split(", ");
 //                                double studentLatitude = Double.parseDouble(gpsPointsArray[0]);
@@ -346,36 +149,26 @@
 //
 //                                float[] results = new float[1];
 //                                Location.distanceBetween(teacherLatitude, teacherLongitude, studentLatitude, studentLongitude, results);
-//                                double distance = results[0];
-//                                distance = Math.round(distance * 100.0) / 100.0;
+//                                double distance = Math.round(results[0] * 100.0) / 100.0;
 //                                String attendance = distance < 10 ? "Present" : "Absent";
 //
-//                                studentList.add(new Student(user.getEmail(), gpsPoints, distance, attendance));
-//                                Log.d(TAG, "Student added: " + user.getEmail() + ", " + gpsPoints + ", " + distance + ", " + attendance);
+//                                String fullName = firstName + " " + lastName;
+//                                studentList.add(new Student(fullName, gpsPoints, distance, attendance));
+//                                Log.d(TAG, "Student added: " + fullName + ", " + gpsPoints + ", " + distance + ", " + attendance);
 //                            } else {
-//                                Log.d(TAG, "Student " + user.getEmail() + " has no GPS points");
+//                                Log.d(TAG, "Student " + userEmail + " has no GPS points");
 //                            }
 //                        }
 //                        studentAdapter.notifyDataSetChanged();
 //                    } else {
-//                        Log.e(TAG, "Error getting documents: ", task.getException());
+//                        Log.e(TAG, "Error getting attendance records: ", task.getException());
 //                        Toast.makeText(TeacherActivity.this, "Failed to fetch student data", Toast.LENGTH_SHORT).show();
 //                    }
 //                });
 //    }
-//
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-//        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-//            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                getInformation();
-//            } else {
-//                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
-//            }
-//        }
-//    }
 //}
-
+//
+//
 
 package com.example.showattendance;
 
@@ -393,6 +186,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -401,8 +195,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -455,7 +253,8 @@ public class TeacherActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerClasses.setAdapter(adapter);
 
-        fetchClasses(adapter);
+        // Check if the teacher has selected courses; if not, prompt for selection
+        checkAndPromptCourseSelection(adapter);
 
         buttonShowStudents.setOnClickListener(v -> {
             Log.d(TAG, "Show Students button clicked");
@@ -467,24 +266,125 @@ public class TeacherActivity extends AppCompatActivity {
         });
 
         buttonSignOut.setOnClickListener(v -> {
+            mAuth.signOut();
             Intent intent = new Intent(TeacherActivity.this, MainActivity.class);
             startActivity(intent);
+            finish();
         });
     }
 
-    private void fetchClasses(ArrayAdapter<String> adapter) {
+    private void checkAndPromptCourseSelection(ArrayAdapter<String> adapter) {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            db.collection("Users").document(currentUser.getUid()).get()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            DocumentSnapshot document = task.getResult();
+                            if (document.exists()) {
+                                List<String> teacherClasses = (List<String>) document.get("Classes");
+                                if (teacherClasses != null && !teacherClasses.isEmpty()) {
+                                    classList.addAll(teacherClasses);
+                                    adapter.notifyDataSetChanged();
+                                } else {
+                                    // No classes selected yet, prompt for course selection
+                                    fetchClassesAndShowDialog(adapter);
+                                }
+                            } else {
+                                Log.e(TAG, "No such document");
+                                Toast.makeText(TeacherActivity.this, "No user data found. Please contact support.", Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+                            Log.e(TAG, "Error fetching user data: ", task.getException());
+                            Toast.makeText(TeacherActivity.this, "Failed to fetch user data", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        } else {
+            Log.e(TAG, "User is not authenticated");
+            Toast.makeText(TeacherActivity.this, "User not authenticated. Please log in again.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void fetchClassesAndShowDialog(ArrayAdapter<String> adapter) {
+        Log.d(TAG, "Fetching all possible classes from Firestore");
         db.collection("Classes").get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
-                classList.clear();
+                List<String> allClasses = new ArrayList<>();
                 for (QueryDocumentSnapshot document : task.getResult()) {
                     String className = document.getString("name");
-                    classList.add(className);
+                    if (className != null) {
+                        allClasses.add(className);
+                    }
                 }
-                adapter.notifyDataSetChanged();
+                Log.d(TAG, "All classes fetched successfully: " + allClasses);
+
+                // Save allClasses to be used in dialog
+                classList.clear();
+                classList.addAll(allClasses);
+
+                // Show class selection dialog
+                showClassSelectionDialog(adapter);
             } else {
                 Log.e(TAG, "Error fetching classes: ", task.getException());
+                Toast.makeText(TeacherActivity.this, "Failed to fetch classes", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void showClassSelectionDialog(ArrayAdapter<String> adapter) {
+        if (classList.isEmpty()) {
+            Toast.makeText(TeacherActivity.this, "No classes available to select.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select Your Classes");
+
+        String[] classArray = classList.toArray(new String[0]);
+        boolean[] checkedItems = new boolean[classArray.length];
+        ArrayList<String> selectedItems = new ArrayList<>();
+
+        builder.setMultiChoiceItems(classArray, checkedItems, (dialog, which, isChecked) -> {
+            if (isChecked) {
+                selectedItems.add(classArray[which]);
+            } else {
+                selectedItems.remove(classArray[which]);
+            }
+        });
+
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            if (selectedItems.size() == 3) {
+                saveSelectedClasses(selectedItems);
+            } else {
+                Toast.makeText(TeacherActivity.this, "Please select exactly 3 classes", Toast.LENGTH_SHORT).show();
+                showClassSelectionDialog(adapter);
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        builder.create().show();
+    }
+
+    private void saveSelectedClasses(List<String> selectedClasses) {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            db.collection("Users").document(currentUser.getUid()).update("Classes", selectedClasses)
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d(TAG, "Classes updated successfully");
+                        classList.clear();
+                        classList.addAll(selectedClasses);
+                        ArrayAdapter<String> adapter = (ArrayAdapter<String>) spinnerClasses.getAdapter();
+                        adapter.notifyDataSetChanged();
+                        Toast.makeText(TeacherActivity.this, "Classes selected successfully", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Error updating classes", e);
+                        Toast.makeText(TeacherActivity.this, "Failed to update classes", Toast.LENGTH_SHORT).show();
+                    });
+        } else {
+            Log.e(TAG, "User is not authenticated");
+            Toast.makeText(TeacherActivity.this, "User not authenticated. Please log in again.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void getInformation() {
@@ -546,5 +446,3 @@ public class TeacherActivity extends AppCompatActivity {
                 });
     }
 }
-
-
