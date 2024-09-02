@@ -166,10 +166,10 @@ public class StudentActivity extends AppCompatActivity {
         });
 
         builder.setPositiveButton("OK", (dialog, which) -> {
-            if (selectedItems.size() == 3) {
+            if (selectedItems.size() <= 3) {
                 saveSelectedClasses(selectedItems);
             } else {
-                Toast.makeText(StudentActivity.this, "Please select exactly 3 classes", Toast.LENGTH_SHORT).show();
+                Toast.makeText(StudentActivity.this, "Please select one to three courses", Toast.LENGTH_SHORT).show();
                 showClassSelectionDialog(adapter);
             }
         });

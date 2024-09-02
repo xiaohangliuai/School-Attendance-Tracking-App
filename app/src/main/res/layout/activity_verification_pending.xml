@@ -6,16 +6,16 @@
     android:gravity="center"
     android:padding="16dp">
 
-    <TextView
-        android:id="@+id/textViewMessage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:textColor="@android:color/black" />
+<!--    <TextView-->
+<!--        android:id="@+id/textViewMessage"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:textSize="18sp"-->
+<!--        android:textColor="@android:color/black" />-->
 
-    <Button
-        android:id="@+id/buttonResendEmail"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Resend Verification Email" />
+<!--    <Button-->
+<!--        android:id="@+id/buttonResendEmail"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="Resend Verification Email" />-->
 </LinearLayout>
