@@ -3,7 +3,6 @@ package com.example.showattendance;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -29,6 +28,11 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 
 public class StudentActivity extends AppCompatActivity {
 
@@ -219,6 +223,10 @@ public class StudentActivity extends AppCompatActivity {
                 double longitude = location.getLongitude();
                 String gpsPoints = latitude + ", " + longitude;
 
+                // Get the current date and time
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+                String signInTime = sdf.format(new Date());
+
                 // Save attendance record to Firestore
                 FirebaseUser currentUser = mAuth.getCurrentUser();
                 if (currentUser != null) {
@@ -229,10 +237,11 @@ public class StudentActivity extends AppCompatActivity {
                                     String firstName = documentSnapshot.getString("firstName");
                                     String lastName = documentSnapshot.getString("lastName");
 
-                                    AttendanceRecord record = new AttendanceRecord(userEmail, selectedClass, gpsPoints, firstName, lastName);
+                                    // Include signInTime in the AttendanceRecord object
+                                    AttendanceRecord record = new AttendanceRecord(userEmail, selectedClass, gpsPoints, firstName, lastName, signInTime);
                                     db.collection("Attendance").add(record).addOnSuccessListener(documentReference -> {
                                         Log.d(TAG, "Attendance record added: " + documentReference.getId());
-                                        textViewSignInStatus.setText("Your GPS Address: " + gpsPoints + "\nYou have signed in " + selectedClass + " successfully.");
+                                        textViewSignInStatus.setText("Your GPS Address: " + gpsPoints + "\nYou have signed in to " + selectedClass + " successfully at " + signInTime + ".");
                                         textViewSignInStatus.setVisibility(View.VISIBLE);
                                     }).addOnFailureListener(e -> {
                                         Log.e(TAG, "Failed to add attendance record", e);
@@ -256,6 +265,57 @@ public class StudentActivity extends AppCompatActivity {
             }
         });
     }
+
+
+
+//
+//    private void signInToClass() {
+//        Log.d(TAG, "Attempting to get location");
+//        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+//            if (location != null) {
+//                Log.d(TAG, "Location obtained: " + location.toString());
+//                String selectedClass = (String) spinnerClasses.getSelectedItem();
+//                double latitude = location.getLatitude();
+//                double longitude = location.getLongitude();
+//                String gpsPoints = latitude + ", " + longitude;
+//
+//                // Save attendance record to Firestore
+//                FirebaseUser currentUser = mAuth.getCurrentUser();
+//                if (currentUser != null) {
+//                    String userEmail = currentUser.getEmail();
+//                    db.collection("Users").document(currentUser.getUid()).get()
+//                            .addOnSuccessListener(documentSnapshot -> {
+//                                if (documentSnapshot.exists()) {
+//                                    String firstName = documentSnapshot.getString("firstName");
+//                                    String lastName = documentSnapshot.getString("lastName");
+//
+//                                    AttendanceRecord record = new AttendanceRecord(userEmail, selectedClass, gpsPoints, firstName, lastName);
+//                                    db.collection("Attendance").add(record).addOnSuccessListener(documentReference -> {
+//                                        Log.d(TAG, "Attendance record added: " + documentReference.getId());
+//                                        textViewSignInStatus.setText("Your GPS Address: " + gpsPoints + "\nYou have signed in " + selectedClass + " successfully.");
+//                                        textViewSignInStatus.setVisibility(View.VISIBLE);
+//                                    }).addOnFailureListener(e -> {
+//                                        Log.e(TAG, "Failed to add attendance record", e);
+//                                        Toast.makeText(StudentActivity.this, "Sign in failed. Try again.", Toast.LENGTH_SHORT).show();
+//                                    });
+//                                } else {
+//                                    Log.e(TAG, "User document does not exist");
+//                                    Toast.makeText(StudentActivity.this, "User information not found. Please contact support.", Toast.LENGTH_SHORT).show();
+//                                }
+//                            }).addOnFailureListener(e -> {
+//                                Log.e(TAG, "Failed to fetch user information", e);
+//                                Toast.makeText(StudentActivity.this, "Error fetching user information. Try again.", Toast.LENGTH_SHORT).show();
+//                            });
+//                } else {
+//                    Log.e(TAG, "User is not authenticated");
+//                    Toast.makeText(StudentActivity.this, "User not authenticated. Please log in again.", Toast.LENGTH_SHORT).show();
+//                }
+//            } else {
+//                Log.e(TAG, "Location is null");
+//                Toast.makeText(StudentActivity.this, "Could not get location. Try again.", Toast.LENGTH_SHORT).show();
+//            }
+//        });
+//    }
 
 
     @Override

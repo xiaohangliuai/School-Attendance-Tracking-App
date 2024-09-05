@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CalendarView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -17,6 +18,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -33,6 +35,10 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.firebase.Timestamp;
+import java.util.Calendar;
+
 
 public class TeacherActivity extends AppCompatActivity {
 
@@ -52,6 +58,9 @@ public class TeacherActivity extends AppCompatActivity {
     private StudentAdapter studentAdapter;
     private List<String> classList;
     private Spinner spinnerClasses;
+    private CalendarView calendarView;
+    private String selectedDate = "";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +74,16 @@ public class TeacherActivity extends AppCompatActivity {
         teacherGps = findViewById(R.id.textViewTeacherGps);
         buttonSignOut = findViewById(R.id.buttonSignOut);
         spinnerClasses = findViewById(R.id.spinnerClasses);
+
+
+        calendarView = findViewById(R.id.calendarCV);
+        calendarView.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
+            // Format the selected date to a string (e.g., "yyyy-MM-dd")
+            selectedDate = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth);
+            // Update the UI or perform other actions based on the selected date
+            updateUIForSelectedDate();
+        });
+
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         mAuth = FirebaseAuth.getInstance();
@@ -98,6 +117,25 @@ public class TeacherActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
+    }
+
+    private void updateUIForSelectedDate() {
+        Log.d(TAG, "Selected Date: " + selectedDate);
+
+        // Call your method to fetch student data
+        fetchStudentCheckInDate();
+    }
+
+    private void fetchStudentCheckInDate() {
+        // Fetch student data based on the selected date
+        if (selectedDate.isEmpty()) {
+            Toast.makeText(this, "Please select a date.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Implement your fetchStudentData method here
+        // This is where you will filter the data based on the selected date
+        getInformation();
     }
 
     private void checkAndPromptCourseSelection(ArrayAdapter<String> adapter) {
@@ -233,43 +271,109 @@ public class TeacherActivity extends AppCompatActivity {
         }
     }
 
+
     private void fetchStudentData(double teacherLatitude, double teacherLongitude) {
         Log.d(TAG, "Fetching student data...");
         String selectedClass = (String) spinnerClasses.getSelectedItem();
-        Log.d(TAG, "Selected class: " + selectedClass);
 
-        db.collection("Attendance").whereEqualTo("className", selectedClass).get()
+        // Check if selectedDate is empty or not set
+        if (selectedDate.isEmpty()) {
+            Log.e(TAG, "SelectedDate is empty");
+            return;
+        }
+
+        // Convert the selectedDate to the required Firestore string format
+        String startOfDayString = selectedDate + " 00:00:00";
+        String endOfDayString = selectedDate + " 23:59:59";
+
+        Log.d(TAG, "Start time string: " + startOfDayString);
+        Log.d(TAG, "End time string: " + endOfDayString);
+        Log.d(TAG, "SelectedClass is: " + selectedClass);
+
+        // Query Firestore
+        db.collection("Attendance")
+                .whereEqualTo("className", selectedClass)
+                .whereGreaterThanOrEqualTo("signInTime", startOfDayString)
+                .whereLessThanOrEqualTo("signInTime", endOfDayString)
+                .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        studentList.clear();
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            String userEmail = document.getString("email");
-                            String firstName = document.getString("firstName");
-                            String lastName = document.getString("lastName");
-                            String gpsPoints = document.getString("gpsPoints");
+                        if (task.getResult() != null) {
+                            Log.d(TAG, "Query successful, documents count: " + task.getResult().size());
+                            studentList.clear();
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                String userEmail = document.getString("email");
+                                String firstName = document.getString("firstName");
+                                String lastName = document.getString("lastName");
+                                String gpsPoints = document.getString("gpsPoints");
+                                String signInTime = document.getString("signInTime");
 
-                            if (gpsPoints != null && !gpsPoints.isEmpty()) {
-                                String[] gpsPointsArray = gpsPoints.split(", ");
-                                double studentLatitude = Double.parseDouble(gpsPointsArray[0]);
-                                double studentLongitude = Double.parseDouble(gpsPointsArray[1]);
+                                if (gpsPoints != null && !gpsPoints.isEmpty()) {
+                                    String[] gpsPointsArray = gpsPoints.split(", ");
+                                    double studentLatitude = Double.parseDouble(gpsPointsArray[0]);
+                                    double studentLongitude = Double.parseDouble(gpsPointsArray[1]);
 
-                                float[] results = new float[1];
-                                Location.distanceBetween(teacherLatitude, teacherLongitude, studentLatitude, studentLongitude, results);
-                                double distance = Math.round(results[0] * 100.0) / 100.0;
-                                String attendance = distance < 10 ? "Present" : "Absent";
+                                    float[] results = new float[1];
+                                    Location.distanceBetween(teacherLatitude, teacherLongitude, studentLatitude, studentLongitude, results);
+                                    double distance = Math.round(results[0] * 100.0) / 100.0;
+                                    String attendance = distance < 10 ? "Present" : "Absent";
 
-                                String fullName = firstName + " " + lastName;
-                                studentList.add(new Student(fullName, gpsPoints, distance, attendance));
-                                Log.d(TAG, "Student added: " + fullName + ", " + gpsPoints + ", " + distance + ", " + attendance);
-                            } else {
-                                Log.d(TAG, "Student " + userEmail + " has no GPS points");
+                                    String fullName = firstName + " " + lastName;
+                                    studentList.add(new Student(fullName, gpsPoints, distance, signInTime, attendance));
+                                    Log.d(TAG, "Student added: " + fullName + ", " + gpsPoints + ", " + distance + ", " + attendance + ", " + signInTime);
+                                } else {
+                                    Log.d(TAG, "Student " + userEmail + " has no GPS points");
+                                }
                             }
+                            studentAdapter.notifyDataSetChanged();
+                        } else {
+                            Log.d(TAG, "No documents found for the query");
                         }
-                        studentAdapter.notifyDataSetChanged();
                     } else {
                         Log.e(TAG, "Error getting attendance records: ", task.getException());
                         Toast.makeText(TeacherActivity.this, "Failed to fetch student data", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
+
+
+//    private void fetchStudentData(double teacherLatitude, double teacherLongitude) {
+//        Log.d(TAG, "Fetching student data...");
+//        String selectedClass = (String) spinnerClasses.getSelectedItem();
+//        Log.d(TAG, "Selected class: " + selectedClass);
+//
+//        db.collection("Attendance").whereEqualTo("className", selectedClass).get()
+//                .addOnCompleteListener(task -> {
+//                    if (task.isSuccessful()) {
+//                        studentList.clear();
+//                        for (QueryDocumentSnapshot document : task.getResult()) {
+//                            String userEmail = document.getString("email");
+//                            String firstName = document.getString("firstName");
+//                            String lastName = document.getString("lastName");
+//                            String gpsPoints = document.getString("gpsPoints");
+//
+//                            if (gpsPoints != null && !gpsPoints.isEmpty()) {
+//                                String[] gpsPointsArray = gpsPoints.split(", ");
+//                                double studentLatitude = Double.parseDouble(gpsPointsArray[0]);
+//                                double studentLongitude = Double.parseDouble(gpsPointsArray[1]);
+//
+//                                float[] results = new float[1];
+//                                Location.distanceBetween(teacherLatitude, teacherLongitude, studentLatitude, studentLongitude, results);
+//                                double distance = Math.round(results[0] * 100.0) / 100.0;
+//                                String attendance = distance < 10 ? "Present" : "Absent";
+//
+//                                String fullName = firstName + " " + lastName;
+//                                studentList.add(new Student(fullName, gpsPoints, distance, attendance));
+//                                Log.d(TAG, "Student added: " + fullName + ", " + gpsPoints + ", " + distance + ", " + attendance);
+//                            } else {
+//                                Log.d(TAG, "Student " + userEmail + " has no GPS points");
+//                            }
+//                        }
+//                        studentAdapter.notifyDataSetChanged();
+//                    } else {
+//                        Log.e(TAG, "Error getting attendance records: ", task.getException());
+//                        Toast.makeText(TeacherActivity.this, "Failed to fetch student data", Toast.LENGTH_SHORT).show();
+//                    }
+//                });
+//    }
 }

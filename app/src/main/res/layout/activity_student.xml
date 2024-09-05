@@ -6,6 +6,13 @@
     android:gravity="center"
     android:padding="16dp">
 
+    <CalendarView
+        android:id="@+id/calendarCV"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="visible"/>
+
     <TextView
         android:id="@+id/textViewPrompt"
         android:layout_width="wrap_content"
@@ -52,57 +59,3 @@
             android:text="Log out"
             android:layout_marginTop="16dp" />
 </LinearLayout>
-
-
-
-
-    <!--<?xml version="1.0" encoding="utf-8"?>-->
-<!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
-<!--    android:layout_width="match_parent"-->
-<!--    android:layout_height="match_parent"-->
-<!--    android:orientation="vertical"-->
-<!--    android:padding="16dp">-->
-
-<!--    <Button-->
-<!--        android:id="@+id/buttonShowLocation"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:text="Show My Location" />-->
-
-<!--    <TextView-->
-<!--        android:id="@+id/textViewLocation"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:paddingTop="16dp" />-->
-
-
-<!--    <Button-->
-<!--        android:id="@+id/buttonSignOut"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:text="Sign out" />-->
-
-<!--    -->
-
-
-
-
-<!--    <Button-->
-<!--        android:id="@+id/buttonAddClasses"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:text="Add Classes" -->
-<!--        />-->
-
-<!--        <androidx.recyclerview.widget.RecyclerView-->
-<!--            android:id="@+id/recyclerViewClass"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            />-->
-
-
-
-
-
-
-<!--</LinearLayout>-->

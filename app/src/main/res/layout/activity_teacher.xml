@@ -8,28 +8,13 @@
     android:gravity="center">
 
 
-    <FrameLayout
-        android:id="@+id/calendar_container"
+    <CalendarView
+        android:id="@+id/calendarCV"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center">
+        android:layout_gravity="center"
+        android:visibility="visible"/>
 
-        <!-- Week View (initially visible) -->
-        <CalendarView
-            android:id="@+id/weekView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="visible"/>
-
-        <!-- Month View (initially gone) -->
-        <CalendarView
-            android:id="@+id/monthView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone"/>
-    </FrameLayout>
 
     <Spinner
         android:id="@+id/spinnerClasses"
@@ -82,7 +67,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="GPS Points" />
+            android:text="GPS" />
 
         <TextView
             android:id="@+id/textViewDistance"
@@ -90,6 +75,13 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Distance" />
+
+        <TextView
+            android:id="@+id/textViewCheckInTime"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Time" />
 
         <TextView
             android:id="@+id/textViewAttendance"
