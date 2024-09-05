@@ -7,6 +7,30 @@
     android:orientation="vertical"
     android:gravity="center">
 
+
+    <FrameLayout
+        android:id="@+id/calendar_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center">
+
+        <!-- Week View (initially visible) -->
+        <CalendarView
+            android:id="@+id/weekView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="visible"/>
+
+        <!-- Month View (initially gone) -->
+        <CalendarView
+            android:id="@+id/monthView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"/>
+    </FrameLayout>
+
     <Spinner
         android:id="@+id/spinnerClasses"
         android:layout_width="match_parent"
