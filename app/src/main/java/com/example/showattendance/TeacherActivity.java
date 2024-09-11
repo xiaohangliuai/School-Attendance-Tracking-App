@@ -1,9 +1,15 @@
 package com.example.showattendance;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ArrayAdapter;
@@ -17,7 +23,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -29,15 +37,18 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.collection.BuildConfig;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.firebase.Timestamp;
-import java.util.Calendar;
+import android.os.Environment;
+import java.io.File;
+import java.io.FileWriter;
 
 
 public class TeacherActivity extends AppCompatActivity {
@@ -74,6 +85,8 @@ public class TeacherActivity extends AppCompatActivity {
         teacherGps = findViewById(R.id.textViewTeacherGps);
         buttonSignOut = findViewById(R.id.buttonSignOut);
         spinnerClasses = findViewById(R.id.spinnerClasses);
+        Button exportCSVButton = findViewById(R.id.exportCSVButton);
+
 
 
         calendarView = findViewById(R.id.calendarCV);
@@ -111,6 +124,21 @@ public class TeacherActivity extends AppCompatActivity {
             }
         });
 
+        Log.d(TAG, "check permissions!!");
+        checkPermissions();
+
+
+        // Set an OnClickListener to handle exporting data
+        exportCSVButton.setOnClickListener(view -> {
+
+            if (studentList.isEmpty()) {
+                Toast.makeText(TeacherActivity.this, "No data to export", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            exportToCsv(studentList, selectedDate);
+//            checkDirectoryAccess();
+        });
+
         buttonSignOut.setOnClickListener(v -> {
             mAuth.signOut();
             Intent intent = new Intent(TeacherActivity.this, MainActivity.class);
@@ -118,6 +146,90 @@ public class TeacherActivity extends AppCompatActivity {
             finish();
         });
     }
+
+
+
+    private void checkDirectoryAccess() {
+        // Define the directory path
+        File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "MyApp");
+
+        // Check if the directory exists
+        if (!directory.exists()) {
+            Log.d(TAG, "Directory does not exist. Attempting to create it.");
+            if (directory.mkdirs()) {
+                Log.d(TAG, "Directory created successfully.");
+            } else {
+                Log.e(TAG, "Failed to create directory.");
+            }
+        } else {
+            Log.d(TAG, "Directory already exists.");
+        }
+
+        // Check if the directory is writable
+        File testFile = new File(directory, "testfile.txt");
+        try {
+            if (testFile.createNewFile()) {
+                Log.d(TAG, "Test file created successfully.");
+            } else {
+                Log.d(TAG, "Test file already exists or could not be created.");
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Error creating test file: " + e.getMessage());
+        }
+    }
+
+    private static final int REQUEST_WRITE_STORAGE = 112;
+
+    private void checkPermissions() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_WRITE_STORAGE);
+        }
+    }
+
+    private void exportToCsv(List<Student> students, String selectedDate) {
+        // Ensure the directory exists
+        File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "AttendanceRecords");
+        if (!directory.exists() && !directory.mkdirs()) {
+            Log.e(TAG, "Failed to create directory");
+            return;
+        }
+
+        String selectedClass = (String) spinnerClasses.getSelectedItem();
+        String fileName = "Attendance_" + selectedClass.replace(" ", "_") + "_" + selectedDate + ".csv";
+        File file = new File(directory, fileName);
+
+        try (FileWriter writer = new FileWriter(file)) {
+            // Write CSV header
+            writer.append("Name,GPS,Distance,Time,Attendance\n");
+
+            // Write data rows
+            for (Student student : students) {
+                // Construct GPS field with two coordinates
+                String gpsField = student.getGpsPoints(); // assuming getGps() returns a string like "40.7454417, -73.9801617"
+
+                // Write each field separated by commas
+                String row = String.format("%s,%s,%f,%s,%s\n",
+                        student.getName(), // Name
+                        gpsField, // GPS
+                        student.getDistance(), // Distance
+                        student.getCheckInTime(), // Time
+                        student.getAttendance()); // Attendance
+
+                writer.append(row);
+            }
+
+            writer.flush();
+            Log.d(TAG, "CSV file saved successfully at " + file.getAbsolutePath());
+            Toast.makeText(this, "CSV file saved to Downloads/AttendanceRecords", Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "Error saving CSV file", e);
+            Toast.makeText(this, "Error saving CSV file", Toast.LENGTH_SHORT).show();
+        }
+    }
+
 
     private void updateUIForSelectedDate() {
         Log.d(TAG, "Selected Date: " + selectedDate);
@@ -133,8 +245,6 @@ public class TeacherActivity extends AppCompatActivity {
             return;
         }
 
-        // Implement your fetchStudentData method here
-        // This is where you will filter the data based on the selected date
         getInformation();
     }
 
@@ -336,44 +446,4 @@ public class TeacherActivity extends AppCompatActivity {
                 });
     }
 
-
-//    private void fetchStudentData(double teacherLatitude, double teacherLongitude) {
-//        Log.d(TAG, "Fetching student data...");
-//        String selectedClass = (String) spinnerClasses.getSelectedItem();
-//        Log.d(TAG, "Selected class: " + selectedClass);
-//
-//        db.collection("Attendance").whereEqualTo("className", selectedClass).get()
-//                .addOnCompleteListener(task -> {
-//                    if (task.isSuccessful()) {
-//                        studentList.clear();
-//                        for (QueryDocumentSnapshot document : task.getResult()) {
-//                            String userEmail = document.getString("email");
-//                            String firstName = document.getString("firstName");
-//                            String lastName = document.getString("lastName");
-//                            String gpsPoints = document.getString("gpsPoints");
-//
-//                            if (gpsPoints != null && !gpsPoints.isEmpty()) {
-//                                String[] gpsPointsArray = gpsPoints.split(", ");
-//                                double studentLatitude = Double.parseDouble(gpsPointsArray[0]);
-//                                double studentLongitude = Double.parseDouble(gpsPointsArray[1]);
-//
-//                                float[] results = new float[1];
-//                                Location.distanceBetween(teacherLatitude, teacherLongitude, studentLatitude, studentLongitude, results);
-//                                double distance = Math.round(results[0] * 100.0) / 100.0;
-//                                String attendance = distance < 10 ? "Present" : "Absent";
-//
-//                                String fullName = firstName + " " + lastName;
-//                                studentList.add(new Student(fullName, gpsPoints, distance, attendance));
-//                                Log.d(TAG, "Student added: " + fullName + ", " + gpsPoints + ", " + distance + ", " + attendance);
-//                            } else {
-//                                Log.d(TAG, "Student " + userEmail + " has no GPS points");
-//                            }
-//                        }
-//                        studentAdapter.notifyDataSetChanged();
-//                    } else {
-//                        Log.e(TAG, "Error getting attendance records: ", task.getException());
-//                        Toast.makeText(TeacherActivity.this, "Failed to fetch student data", Toast.LENGTH_SHORT).show();
-//                    }
-//                });
-//    }
 }
