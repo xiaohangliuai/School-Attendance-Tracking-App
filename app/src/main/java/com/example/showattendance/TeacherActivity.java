@@ -94,7 +94,7 @@ public class TeacherActivity extends AppCompatActivity {
             // Format the selected date to a string (e.g., "yyyy-MM-dd")
             selectedDate = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth);
             // Update the UI or perform other actions based on the selected date
-            updateUIForSelectedDate();
+            getInformation();
         });
 
 
@@ -230,24 +230,6 @@ public class TeacherActivity extends AppCompatActivity {
         }
     }
 
-
-    private void updateUIForSelectedDate() {
-        Log.d(TAG, "Selected Date: " + selectedDate);
-
-        // Call your method to fetch student data
-        fetchStudentCheckInDate();
-    }
-
-    private void fetchStudentCheckInDate() {
-        // Fetch student data based on the selected date
-        if (selectedDate.isEmpty()) {
-            Toast.makeText(this, "Please select a date.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        getInformation();
-    }
-
     private void checkAndPromptCourseSelection(ArrayAdapter<String> adapter) {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
@@ -363,6 +345,13 @@ public class TeacherActivity extends AppCompatActivity {
     }
 
     private void getInformation() {
+
+        if (selectedDate.isEmpty()) {
+            Toast.makeText(this, "Please select a date.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Log.d(TAG, "Selected Date: " + selectedDate);
+
         Log.d(TAG, "Getting information...");
         try {
             fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
