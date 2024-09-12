@@ -93,8 +93,7 @@ public class TeacherActivity extends AppCompatActivity {
         calendarView.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
             // Format the selected date to a string (e.g., "yyyy-MM-dd")
             selectedDate = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth);
-            // Update the UI or perform other actions based on the selected date
-            getInformation();
+//            getInformation();
         });
 
 
@@ -123,9 +122,9 @@ public class TeacherActivity extends AppCompatActivity {
                 getInformation();
             }
         });
-
-        Log.d(TAG, "check permissions!!");
-        checkPermissions();
+//
+//        Log.d(TAG, "check permissions!!");
+//        checkPermissions();
 
 
         // Set an OnClickListener to handle exporting data
@@ -147,46 +146,6 @@ public class TeacherActivity extends AppCompatActivity {
         });
     }
 
-
-
-    private void checkDirectoryAccess() {
-        // Define the directory path
-        File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "MyApp");
-
-        // Check if the directory exists
-        if (!directory.exists()) {
-            Log.d(TAG, "Directory does not exist. Attempting to create it.");
-            if (directory.mkdirs()) {
-                Log.d(TAG, "Directory created successfully.");
-            } else {
-                Log.e(TAG, "Failed to create directory.");
-            }
-        } else {
-            Log.d(TAG, "Directory already exists.");
-        }
-
-        // Check if the directory is writable
-        File testFile = new File(directory, "testfile.txt");
-        try {
-            if (testFile.createNewFile()) {
-                Log.d(TAG, "Test file created successfully.");
-            } else {
-                Log.d(TAG, "Test file already exists or could not be created.");
-            }
-        } catch (IOException e) {
-            Log.e(TAG, "Error creating test file: " + e.getMessage());
-        }
-    }
-
-    private static final int REQUEST_WRITE_STORAGE = 112;
-
-    private void checkPermissions() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    REQUEST_WRITE_STORAGE);
-        }
-    }
 
     private void exportToCsv(List<Student> students, String selectedDate) {
         // Ensure the directory exists
@@ -211,11 +170,11 @@ public class TeacherActivity extends AppCompatActivity {
 
                 // Write each field separated by commas
                 String row = String.format("%s,%s,%f,%s,%s\n",
-                        student.getName(), // Name
-                        gpsField, // GPS
-                        student.getDistance(), // Distance
-                        student.getCheckInTime(), // Time
-                        student.getAttendance()); // Attendance
+                        student.getName(),
+                        gpsField,
+                        student.getDistance(),
+                        student.getCheckInTime(),
+                        student.getAttendance());
 
                 writer.append(row);
             }
