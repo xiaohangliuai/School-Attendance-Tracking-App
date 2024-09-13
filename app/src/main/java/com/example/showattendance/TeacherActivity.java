@@ -5,6 +5,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -12,9 +13,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CalendarView;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,17 +41,28 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.collection.BuildConfig;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import android.os.Environment;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 
 public class TeacherActivity extends AppCompatActivity {
@@ -86,6 +100,7 @@ public class TeacherActivity extends AppCompatActivity {
         buttonSignOut = findViewById(R.id.buttonSignOut);
         spinnerClasses = findViewById(R.id.spinnerClasses);
         Button exportCSVButton = findViewById(R.id.exportCSVButton);
+        ImageButton exportCSVBasedClassIB = findViewById(R.id.exportCsvBasedClassIB);
 
 
 
@@ -122,10 +137,6 @@ public class TeacherActivity extends AppCompatActivity {
                 getInformation();
             }
         });
-//
-//        Log.d(TAG, "check permissions!!");
-//        checkPermissions();
-
 
         // Set an OnClickListener to handle exporting data
         exportCSVButton.setOnClickListener(view -> {
@@ -136,6 +147,10 @@ public class TeacherActivity extends AppCompatActivity {
             }
             exportToCsv(studentList, selectedDate);
 //            checkDirectoryAccess();
+        });
+
+        exportCSVBasedClassIB.setOnClickListener(view -> {
+            showExportDialog(studentList);
         });
 
         buttonSignOut.setOnClickListener(v -> {
@@ -188,6 +203,151 @@ public class TeacherActivity extends AppCompatActivity {
             Toast.makeText(this, "Error saving CSV file", Toast.LENGTH_SHORT).show();
         }
     }
+
+    private void showExportDialog(List<Student> students) {
+        // Get the selected class
+        String selectedClass = (String) spinnerClasses.getSelectedItem();
+
+        // Create a dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Export Attendance");
+
+        // Set the message of the dialog
+        String message = "You have selected the class: " + selectedClass +
+                ". Please confirm if you want to download the attendance records.";
+        builder.setMessage(message);
+
+        // Set positive button (for downloading CSV)
+        builder.setPositiveButton("Download", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Call the exportToCsv function to export the data
+                exportToCsvForClass(selectedClass);
+            }
+        });
+
+        // Set negative button (for canceling)
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
+        // Show the dialog
+        builder.create().show();
+    }
+
+
+    private void exportToCsvForClass(String selectedClass) {
+        // Ensure the directory exists
+        File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "AttendanceRecords");
+        if (!directory.exists() && !directory.mkdirs()) {
+            Log.e(TAG, "Failed to create directory");
+            return;
+        }
+
+        // Set up the file name
+        String fileName = "Attendance_" + selectedClass.replace(" ", "_") + ".csv";
+        File file = new File(directory, fileName);
+
+        // Initialize Firestore and prepare CSV content
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        CollectionReference attendanceRef = db.collection("Attendance");
+
+        // Map to store attendance data
+        Map<String, Map<String, String>> attendanceMap = new HashMap<>();
+
+        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+            if (location != null) {
+                double teacherLatitude = location.getLatitude();
+                double teacherLongitude = location.getLongitude();
+
+                attendanceRef.whereEqualTo("className", selectedClass).get()
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                // Process each document in the query result
+                                for (QueryDocumentSnapshot document : task.getResult()) {
+                                    String firstName = document.getString("firstName");
+                                    String lastName = document.getString("lastName");
+                                    String fullName = firstName + " " + lastName;
+                                    String signInTime = document.getString("signInTime");
+                                    String gpsPoints = document.getString("gpsPoints");
+
+                                    String[] gpsParts = gpsPoints.split(", ");
+                                    double studentLatitude = Double.parseDouble(gpsParts[0]);
+                                    double studentLongitude = Double.parseDouble(gpsParts[1]);
+
+                                    float[] results = new float[1];
+                                    Location.distanceBetween(teacherLatitude, teacherLongitude, studentLatitude, studentLongitude, results);
+                                    double distance = Math.round(results[0] * 100.0) / 100.0;
+
+                                    String attendance = distance < 10 ? "Present" : "Absent";
+
+                                    // Extract the date from sign-in time if it's not null
+                                    String date = "Absent"; // Default value
+                                    if (signInTime != null && !signInTime.isEmpty()) {
+                                        date = signInTime.split(" ")[0]; // YYYY-MM-DD
+                                    }
+
+                                    if (!attendanceMap.containsKey(fullName)) {
+                                        attendanceMap.put(fullName, new HashMap<>());
+                                    }
+                                    Objects.requireNonNull(attendanceMap.get(fullName)).put(date, attendance);
+                                }
+
+                                // Write the CSV file
+                                writeCsvFile(file, attendanceMap);
+                            } else {
+                                Log.e(TAG, "Error fetching data", task.getException());
+                            }
+                        });
+            } else {
+                Log.e(TAG, "Failed to get teacher location");
+            }
+        });
+    }
+
+    private void writeCsvFile(File file, Map<String, Map<String, String>> attendanceMap) {
+        try (FileWriter writer = new FileWriter(file)) {
+            // Write the header row
+            writer.append("Name");
+
+            // Extract dates from the data for header
+            Set<String> dates = new TreeSet<>();
+            for (Map<String, String> dateMap : attendanceMap.values()) {
+                dates.addAll(dateMap.keySet());
+            }
+            for (String date : dates) {
+                writer.append(",").append(date);
+            }
+            writer.append("\n");
+
+            // Write the data rows
+            for (Map.Entry<String, Map<String, String>> entry : attendanceMap.entrySet()) {
+                String name = entry.getKey();
+                Map<String, String> dateMap = entry.getValue();
+
+                writer.append(name);
+
+                for (String date : dates) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        writer.append(",").append(dateMap.getOrDefault(date, "Absent"));
+                    }
+                }
+                writer.append("\n");
+            }
+
+            writer.flush();
+            Log.d(TAG, "CSV file created: " + file.getAbsolutePath());
+            Toast.makeText(this, "CSV file saved to Downloads/AttendanceRecords", Toast.LENGTH_SHORT).show();
+
+        } catch (IOException e) {
+            Log.e(TAG, "Error writing CSV file", e);
+        }
+    }
+
+
 
     private void checkAndPromptCourseSelection(ArrayAdapter<String> adapter) {
         FirebaseUser currentUser = mAuth.getCurrentUser();
