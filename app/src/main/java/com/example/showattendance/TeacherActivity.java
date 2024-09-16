@@ -8,10 +8,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Typeface;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.StyleSpan;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -212,10 +216,20 @@ public class TeacherActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Export Attendance");
 
-        // Set the message of the dialog
+        // Create a SpannableString for the message
         String message = "You have selected the class: " + selectedClass +
                 ". Please confirm if you want to download the attendance records.";
-        builder.setMessage(message);
+        SpannableString spannableMessage = new SpannableString(message);
+
+        // Find the start and end indices of selectedClass in the message
+        int start = message.indexOf(selectedClass);
+        int end = start + selectedClass.length();
+
+        // Apply bold style to selectedClass
+        spannableMessage.setSpan(new StyleSpan(Typeface.BOLD), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        // Set the SpannableString as the message of the dialog
+        builder.setMessage(spannableMessage);
 
         // Set positive button (for downloading CSV)
         builder.setPositiveButton("Download", new DialogInterface.OnClickListener() {
@@ -315,6 +329,7 @@ public class TeacherActivity extends AppCompatActivity {
 
             // Extract dates from the data for header
             Set<String> dates = new TreeSet<>();
+
             for (Map<String, String> dateMap : attendanceMap.values()) {
                 dates.addAll(dateMap.keySet());
             }
