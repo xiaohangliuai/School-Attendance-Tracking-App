@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.showattendance"
-        minSdk = 21
+        minSdk = 26
         targetSdk = 34
         versionCode = 2
         versionName = "1.1"
@@ -57,6 +57,11 @@ dependencies {
     implementation("com.google.firebase:firebase-auth:21.0.1")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.android.material:material:1.12.0")
+
+
+    implementation("org.apache.poi:poi:5.2.2")
+    implementation("org.apache.poi:poi-ooxml:5.2.2")
+
 
 
 

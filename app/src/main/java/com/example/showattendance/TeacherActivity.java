@@ -1,23 +1,17 @@
 package com.example.showattendance;
 
 import android.Manifest;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.StyleSpan;
 import android.util.Log;
-import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CalendarView;
@@ -26,38 +20,26 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.collection.BuildConfig;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 import android.os.Environment;
@@ -67,6 +49,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.common.usermodel.HyperlinkType;
+import java.io.FileOutputStream;
 
 
 public class TeacherActivity extends AppCompatActivity {
@@ -151,10 +141,13 @@ public class TeacherActivity extends AppCompatActivity {
             }
             exportToCsv(studentList, selectedDate);
 //            checkDirectoryAccess();
+
         });
 
         exportCSVBasedClassIB.setOnClickListener(view -> {
-            showExportDialog(studentList);
+            showExportDialog();
+//            exportToExcelForClass();
+//            exportToXlsxForClass();
         });
 
         buttonSignOut.setOnClickListener(v -> {
@@ -208,7 +201,7 @@ public class TeacherActivity extends AppCompatActivity {
         }
     }
 
-    private void showExportDialog(List<Student> students) {
+    private void showExportDialog() {
         // Get the selected class
         String selectedClass = (String) spinnerClasses.getSelectedItem();
 
@@ -236,7 +229,7 @@ public class TeacherActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // Call the exportToCsv function to export the data
-                exportToCsvForClass(selectedClass);
+                exportToXlsxForClass();
             }
         });
 
@@ -250,6 +243,183 @@ public class TeacherActivity extends AppCompatActivity {
 
         // Show the dialog
         builder.create().show();
+    }
+
+
+
+    private void exportToXlsxForClass() {
+        String selectedClass = (String) spinnerClasses.getSelectedItem();
+
+        // Ensure the directory exists
+        File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "AttendanceRecords");
+        if (!directory.exists() && !directory.mkdirs()) {
+            Log.e(TAG, "Failed to create directory");
+            return;
+        }
+
+        // Set up the file name
+        String fileName = "Attendance_" + selectedClass.replace(" ", "_") + ".xlsx";
+        File file = new File(directory, fileName);
+
+        // Initialize Firestore and prepare XLSX content
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        CollectionReference attendanceRef = db.collection("Attendance");
+
+        // Map to store attendance data
+        Map<String, Map<String, String>> attendanceMap = new HashMap<>();
+
+        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+            if (location != null) {
+                double teacherLatitude = location.getLatitude();
+                double teacherLongitude = location.getLongitude();
+
+                attendanceRef.whereEqualTo("className", selectedClass).get()
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                studentList.clear();
+                                // Process each document in the query result
+                                for (QueryDocumentSnapshot document : task.getResult()) {
+                                    String firstName = document.getString("firstName");
+                                    String lastName = document.getString("lastName");
+                                    String fullName = firstName + " " + lastName;
+                                    String signInTime = document.getString("signInTime");
+                                    String gpsPoints = document.getString("gpsPoints");
+
+                                    String[] gpsParts = gpsPoints.split(", ");
+                                    double studentLatitude = Double.parseDouble(gpsParts[0]);
+                                    double studentLongitude = Double.parseDouble(gpsParts[1]);
+
+                                    float[] results = new float[1];
+                                    Location.distanceBetween(teacherLatitude, teacherLongitude, studentLatitude, studentLongitude, results);
+                                    double distance = Math.round(results[0] * 100.0) / 100.0;
+
+                                    String attendance = distance < 10 ? "Present" : "Absent";
+
+                                    studentList.add(new Student(fullName, gpsPoints, distance, signInTime, attendance));
+                                    Log.d(TAG, "Student added: " + fullName + ", " + gpsPoints + ", " + distance + ", " + attendance + ", " + signInTime);
+
+                                    // Extract the date from sign-in time
+                                    String date = "Absent"; // Default value
+                                    if (signInTime != null && !signInTime.isEmpty()) {
+                                        date = signInTime.split(" ")[0]; // YYYY-MM-DD
+                                    }
+
+                                    if (!attendanceMap.containsKey(fullName)) {
+                                        attendanceMap.put(fullName, new HashMap<>());
+                                    }
+                                    Objects.requireNonNull(attendanceMap.get(fullName)).put(date, attendance);
+                                }
+
+                                // Write the XLSX file
+                                writeXlsxFile(file, attendanceMap, teacherLatitude, teacherLongitude, studentList);
+                            } else {
+                                Log.e(TAG, "Error fetching data", task.getException());
+                            }
+                        });
+            } else {
+                Log.e(TAG, "Failed to get teacher location");
+            }
+        });
+    }
+
+
+
+    private void writeXlsxFile(File file, Map<String, Map<String, String>> attendanceMap, double teacherLatitude, double teacherLongitude, List<Student> studentList) {
+        try (XSSFWorkbook workbook = new XSSFWorkbook()) {
+            XSSFSheet sheet = workbook.createSheet("Attendance");
+
+            // Create header row
+            XSSFRow headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("Name");
+
+            // Extract dates from the data for header
+            Set<String> dates = new TreeSet<>();
+            for (Map<String, String> dateMap : attendanceMap.values()) {
+                dates.addAll(dateMap.keySet());
+            }
+            int columnIndex = 1;
+            for (String date : dates) {
+                headerRow.createCell(columnIndex++).setCellValue(date);
+            }
+
+            // Write the data rows
+            int rowIndex = 1;
+            for (Map.Entry<String, Map<String, String>> entry : attendanceMap.entrySet()) {
+                String name = entry.getKey();
+                Map<String, String> dateMap = entry.getValue();
+
+                XSSFRow row = sheet.createRow(rowIndex++);
+                row.createCell(0).setCellValue(name);
+
+                columnIndex = 1;
+                for (String date : dates) {
+                    String attendanceStatus = dateMap.getOrDefault(date, "Absent");
+                    XSSFCell cell = row.createCell(columnIndex++);
+
+                    // Create a hyperlink to the detailed sheet if the status is "Present" or "Absent"
+                    if (attendanceStatus.equals("Present") || attendanceStatus.equals("Absent")) {
+                        Hyperlink link = workbook.getCreationHelper().createHyperlink(HyperlinkType.DOCUMENT);
+
+                        // Create a detailed sheet name
+                        String detailedSheetName = "Details_" + name.replace(" ", "_") + "_" + date;
+                        link.setAddress(detailedSheetName + "!A1"); // Link to the detailed sheet
+
+                        cell.setHyperlink(link);
+                    }
+                    cell.setCellValue(attendanceStatus);
+                }
+            }
+
+            // Generate detailed sheets
+            generateDetailedSheets(workbook, attendanceMap, studentList);
+
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                workbook.write(fos);
+            }
+
+            Log.d(TAG, "XLSX file created: " + file.getAbsolutePath());
+            Toast.makeText(this, "XLSX file saved to Downloads/AttendanceRecords", Toast.LENGTH_SHORT).show();
+
+        } catch (IOException e) {
+            Log.e(TAG, "Error writing XLSX file", e);
+        }
+    }
+
+    private void generateDetailedSheets(XSSFWorkbook workbook, Map<String, Map<String, String>> attendanceMap, List<Student> studentList) {
+        for (Map.Entry<String, Map<String, String>> entry : attendanceMap.entrySet()) {
+            String name = entry.getKey();
+            Map<String, String> dateMap = entry.getValue();
+
+            for (Map.Entry<String, String> dateEntry : dateMap.entrySet()) {
+                String date = dateEntry.getKey();
+                String attendanceStatus = dateEntry.getValue();
+
+                // Set up detailed sheet name
+                String detailedSheetName = "Details_" + name.replace(" ", "_") + "_" + date;
+                XSSFSheet detailedSheet = workbook.createSheet(detailedSheetName);
+
+                // Create header row for detailed information
+                XSSFRow detailedHeaderRow = detailedSheet.createRow(0);
+                detailedHeaderRow.createCell(0).setCellValue("Name");
+                detailedHeaderRow.createCell(1).setCellValue("GPS");
+                detailedHeaderRow.createCell(2).setCellValue("Distance");
+                detailedHeaderRow.createCell(3).setCellValue("Time");
+                detailedHeaderRow.createCell(4).setCellValue("Attendance");
+
+                // Find student in studentList to get GPS and distance
+                for (Student student : studentList) {
+                    if (student.getName().equals(name) && student.getCheckInTime().startsWith(date)) {
+                        XSSFRow detailedRow = detailedSheet.createRow(1);
+                        detailedRow.createCell(0).setCellValue(name);
+                        detailedRow.createCell(1).setCellValue(student.getGpsPoints());
+                        detailedRow.createCell(2).setCellValue(student.getDistance());
+                        detailedRow.createCell(3).setCellValue(student.getCheckInTime());
+                        detailedRow.createCell(4).setCellValue(attendanceStatus);
+                        break; // Stop loop once the student is found
+                    }
+                }
+            }
+        }
     }
 
 
