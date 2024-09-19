@@ -11,26 +11,16 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_gravity="center">
-
-        <Button
-            android:id="@+id/exportCSVButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Export Selected day CSV"
-            android:layout_alignParentRight="true"
-            android:layout_marginRight="16dp"
-            android:layout_marginTop="16dp"
-            />
+        android:layout_gravity="center"
+        android:orientation="horizontal">
 
         <ImageButton
             android:id="@+id/exportCsvBasedClassIB"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/download_24px"
+            android:layout_marginTop="16dp"
             android:layout_marginRight="1dp"
-            android:layout_marginTop="16dp"/>
+            android:src="@drawable/download_24px" />
     </LinearLayout>
 
     <CalendarView
