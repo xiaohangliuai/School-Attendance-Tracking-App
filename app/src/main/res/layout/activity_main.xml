@@ -1,34 +1,33 @@
-<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
+    android:background="@color/background_color"
     tools:context=".MainActivity">
 
-<!--    &lt;!&ndash; Background Image &ndash;&gt;-->
-<!--    <ImageView-->
-<!--        android:id="@+id/background_image"-->
-<!--        android:layout_width="395dp"-->
-<!--        android:layout_height="715dp"-->
-<!--        android:alpha="0.2"-->
-<!--        android:scaleType="centerCrop"-->
-<!--        android:src="@drawable/YU_blue" />-->
-
-    <!-- AttendYU logo -->
+    <!-- AttendYU Logo -->
     <TextView
         android:id="@+id/logo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="AttendYU"
-        android:textSize="36sp"
+        android:textSize="40sp"
         android:textColor="@color/purple"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="100dp"
-        android:fontFamily="sans-serif-light"
-        android:layout_alignParentTop="true"
-        />
+        android:layout_marginTop="40dp"
+        android:fontFamily="sans-serif-light" />
 
+    <!-- School Emblem -->
+    <ImageView
+        android:id="@+id/imageViewSchoolLogo"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:src="@drawable/yu_blue"
+        android:layout_below="@id/logo"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:contentDescription="School Emblem" />
 
     <!-- Email input field -->
     <EditText
@@ -37,7 +36,7 @@
         android:layout_height="wrap_content"
         android:hint="YU Email"
         android:inputType="textEmailAddress"
-        android:layout_below="@id/logo"
+        android:layout_below="@id/imageViewSchoolLogo"
         android:layout_marginTop="32dp"
         android:padding="12dp"
         android:background="@drawable/edit_text_background" />
@@ -61,7 +60,8 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/editTextPassword"
         android:layout_marginTop="16dp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:gravity="center">
 
         <RadioButton
             android:id="@+id/radioButtonTeacher"
@@ -69,7 +69,8 @@
             android:layout_height="wrap_content"
             android:text="Teacher"
             android:textColor="@color/purple"
-            android:padding="12dp" />
+            android:padding="12dp"
+            android:textSize="18sp" />
 
         <RadioButton
             android:id="@+id/radioButtonStudent"
@@ -77,7 +78,8 @@
             android:layout_height="wrap_content"
             android:text="Student"
             android:textColor="@color/purple"
-            android:padding="12dp" />
+            android:padding="12dp"
+            android:textSize="18sp" />
     </RadioGroup>
 
     <!-- Log In button -->
@@ -86,11 +88,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Log In"
-        android:textColor="#FFFFFF"
+        android:textColor="@android:color/white"
         android:background="@color/purple"
         android:layout_below="@id/radioGroupRole"
         android:layout_marginTop="16dp"
-        android:padding="12dp" />
+        android:padding="12dp"
+        android:textSize="18sp"
+        android:fontFamily="sans-serif" />
 
     <!-- Sign Up link -->
     <TextView
@@ -99,34 +103,116 @@
         android:layout_height="wrap_content"
         android:text="Sign up"
         android:textColor="@color/purple"
+        android:textSize="16sp"
         android:layout_below="@id/buttonLogin"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"
         android:clickable="true"
-        android:focusable="true" />
-
+        android:focusable="true"
+        android:fontFamily="sans-serif-medium" />
 </RelativeLayout>
 
 
 
+
     <!--<?xml version="1.0" encoding="utf-8"?>-->
-<!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--    xmlns:tools="http://schemas.android.com/tools"-->
 <!--    android:layout_width="match_parent"-->
 <!--    android:layout_height="match_parent"-->
-<!--    android:orientation="vertical"-->
-<!--    android:padding="16dp">-->
+<!--    android:padding="16dp"-->
+<!--    tools:context=".MainActivity">-->
 
+<!--    &lt;!&ndash; AttendYU logo &ndash;&gt;-->
+<!--    <TextView-->
+<!--        android:id="@+id/logo"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="AttendYU"-->
+<!--        android:textSize="36sp"-->
+<!--        android:textColor="@color/purple"-->
+<!--        android:layout_centerHorizontal="true"-->
+<!--        android:layout_marginTop="100dp"-->
+<!--        android:fontFamily="sans-serif-light"-->
+<!--        android:layout_alignParentTop="true"-->
+<!--        />-->
+
+
+<!--    &lt;!&ndash; Email input field &ndash;&gt;-->
+<!--    <EditText-->
+<!--        android:id="@+id/editTextEmail"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:hint="YU Email"-->
+<!--        android:inputType="textEmailAddress"-->
+<!--        android:layout_below="@id/logo"-->
+<!--        android:layout_marginTop="32dp"-->
+<!--        android:padding="12dp"-->
+<!--        android:background="@drawable/edit_text_background" />-->
+
+<!--    &lt;!&ndash; Password input field &ndash;&gt;-->
+<!--    <EditText-->
+<!--        android:id="@+id/editTextPassword"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:hint="Password"-->
+<!--        android:inputType="textPassword"-->
+<!--        android:layout_below="@id/editTextEmail"-->
+<!--        android:layout_marginTop="16dp"-->
+<!--        android:padding="12dp"-->
+<!--        android:background="@drawable/edit_text_background" />-->
+
+<!--    &lt;!&ndash; Role Selection &ndash;&gt;-->
+<!--    <RadioGroup-->
+<!--        android:id="@+id/radioGroupRole"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_below="@id/editTextPassword"-->
+<!--        android:layout_marginTop="16dp"-->
+<!--        android:orientation="horizontal">-->
+
+<!--        <RadioButton-->
+<!--            android:id="@+id/radioButtonTeacher"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Teacher"-->
+<!--            android:textColor="@color/purple"-->
+<!--            android:padding="12dp" />-->
+
+<!--        <RadioButton-->
+<!--            android:id="@+id/radioButtonStudent"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Student"-->
+<!--            android:textColor="@color/purple"-->
+<!--            android:padding="12dp" />-->
+<!--    </RadioGroup>-->
+
+<!--    &lt;!&ndash; Log In button &ndash;&gt;-->
 <!--    <Button-->
 <!--        android:id="@+id/buttonLogin"-->
 <!--        android:layout_width="match_parent"-->
 <!--        android:layout_height="wrap_content"-->
-<!--        android:text="Login" />-->
+<!--        android:text="Log In"-->
+<!--        android:textColor="#FFFFFF"-->
+<!--        android:background="@color/purple"-->
+<!--        android:layout_below="@id/radioGroupRole"-->
+<!--        android:layout_marginTop="16dp"-->
+<!--        android:padding="12dp" />-->
 
-<!--    <Button-->
+<!--    &lt;!&ndash; Sign Up link &ndash;&gt;-->
+<!--    <TextView-->
 <!--        android:id="@+id/buttonRegister"-->
-<!--        android:layout_width="match_parent"-->
+<!--        android:layout_width="wrap_content"-->
 <!--        android:layout_height="wrap_content"-->
-<!--        android:text="Register" />-->
+<!--        android:text="Sign up"-->
+<!--        android:textColor="@color/purple"-->
+<!--        android:layout_below="@id/buttonLogin"-->
+<!--        android:layout_centerHorizontal="true"-->
+<!--        android:layout_marginTop="16dp"-->
+<!--        android:clickable="true"-->
+<!--        android:focusable="true" />-->
+
+<!--</RelativeLayout>-->
 
 
-<!--</LinearLayout>-->

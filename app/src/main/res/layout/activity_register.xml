@@ -6,14 +6,6 @@
     android:padding="16dp"
     tools:context=".MainActivity">
 
-    <!--    &lt;!&ndash; Background Image &ndash;&gt;-->
-    <!--    <ImageView-->
-    <!--        android:id="@+id/background_image"-->
-    <!--        android:layout_width="395dp"-->
-    <!--        android:layout_height="715dp"-->
-    <!--        android:alpha="0.2"-->
-    <!--        android:scaleType="centerCrop"-->
-    <!--        android:src="@drawable/YU_blue" />-->
 
     <!-- AttendYU logo -->
     <TextView
@@ -114,59 +106,3 @@
 
 
 </RelativeLayout>
-
-
-
-
-
-<!--<?xml version="1.0" encoding="utf-8"?>-->
-<!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
-<!--    android:layout_width="match_parent"-->
-<!--    android:layout_height="match_parent"-->
-<!--    android:orientation="vertical"-->
-<!--    android:padding="16dp">-->
-
-<!--    <EditText-->
-<!--        android:id="@+id/editTextEmail"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:hint="Username" />-->
-
-<!--    <EditText-->
-<!--        android:id="@+id/editTextPassword"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:hint="Password"-->
-<!--        android:inputType="textPassword" />-->
-
-<!--    <RadioGroup-->
-<!--        android:id="@+id/radioGroupRole"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:orientation="horizontal">-->
-
-<!--        <RadioButton-->
-<!--            android:id="@+id/radioButtonStudent"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:text="Student" />-->
-
-<!--        <RadioButton-->
-<!--            android:id="@+id/radioButtonTeacher"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:text="Teacher" />-->
-<!--    </RadioGroup>-->
-
-<!--    <Button-->
-<!--        android:id="@+id/buttonRegister"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:text="Register" />-->
-
-<!--    <Button-->
-<!--        android:id="@+id/buttonBack"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:text="Back" />-->
-<!--</LinearLayout>-->

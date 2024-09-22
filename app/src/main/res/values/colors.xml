@@ -4,4 +4,19 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="purple">#800080</color>
+    <color name="grey">#E1E3E3</color>
+
+    <!-- Background color for the entire layout -->
+    <color name="background_color">#F5F5F5</color> <!-- Light grey -->
+
+    <!-- Primary color for buttons and highlights -->
+    <color name="primaryColor">#99673AB7</color> <!-- Deep purple -->
+
+    <!-- Secondary color for other interactive elements -->
+    <color name="secondaryColor">#03DAC5</color> <!-- Teal -->
+
+    <!-- Text color -->
+    <color name="textColorPrimary">#FFFFFF</color> <!-- White -->
+    <color name="textColorSecondary">#000000</color> <!-- Black -->
+
 </resources>
