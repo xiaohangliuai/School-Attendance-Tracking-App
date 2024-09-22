@@ -97,7 +97,7 @@
         android:id="@+id/buttonRegister"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Sign Up"
+        android:text="CREATE ACCOUNT"
         android:textColor="#FFFFFF"
         android:background="@color/purple"
         android:layout_below="@id/radioGroupRole"

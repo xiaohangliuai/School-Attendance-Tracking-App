@@ -74,9 +74,10 @@ public class RegisterActivity extends AppCompatActivity {
                                                         if (task.isSuccessful()) {
                                                             Toast.makeText(RegisterActivity.this, "Verification email sent. Please check your inbox.", Toast.LENGTH_SHORT).show();
 
-//                                                            // Sign out the user to force email verification before login
-//                                                            mAuth.signOut();
+                                                            // Sign out the user to force email verification before login
+                                                            mAuth.signOut();
 
+                                                            // Store user info in Firestore
                                                             User user = new User(email, role, "", firstName, lastName);
                                                             db.collection("Users").document(firebaseUser.getUid()).set(user)
                                                                     .addOnSuccessListener(aVoid -> {
@@ -104,6 +105,58 @@ public class RegisterActivity extends AppCompatActivity {
                                 }
                             }
                         });
+
+
+//
+//
+//                mAuth.createUserWithEmailAndPassword(email, password)
+//                        .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+//                            @Override
+//                            public void onComplete(@NonNull Task<AuthResult> task) {
+//                                if (task.isSuccessful()) {
+//                                    // Sign in success, update UI with the signed-in user's information
+//                                    Log.d(TAG, "createUserWithEmail:success");
+//                                    FirebaseUser firebaseUser = mAuth.getCurrentUser();
+//
+//                                    if (firebaseUser != null) {
+//                                        // Send email verification
+//                                        firebaseUser.sendEmailVerification()
+//                                                .addOnCompleteListener(new OnCompleteListener<Void>() {
+//                                                    @Override
+//                                                    public void onComplete(@NonNull Task<Void> task) {
+//                                                        if (task.isSuccessful()) {
+//                                                            Toast.makeText(RegisterActivity.this, "Verification email sent. Please check your inbox.", Toast.LENGTH_SHORT).show();
+//
+////                                                            // Sign out the user to force email verification before login
+////                                                            mAuth.signOut();
+//
+//                                                            User user = new User(email, role, "", firstName, lastName);
+//                                                            db.collection("Users").document(firebaseUser.getUid()).set(user)
+//                                                                    .addOnSuccessListener(aVoid -> {
+//                                                                        Toast.makeText(RegisterActivity.this, "Registration successful. Please verify your email.", Toast.LENGTH_SHORT).show();
+//                                                                        Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
+//                                                                        startActivity(intent);
+//                                                                        finish();
+//                                                                    })
+//                                                                    .addOnFailureListener(e -> {
+//                                                                        Toast.makeText(RegisterActivity.this, "Registration failed", Toast.LENGTH_SHORT).show();
+//                                                                        Log.e(TAG, "Error adding document", e);
+//                                                                    });
+//                                                        } else {
+//                                                            Toast.makeText(RegisterActivity.this, "Failed to send verification email.", Toast.LENGTH_SHORT).show();
+//                                                            Log.e(TAG, "sendEmailVerification", task.getException());
+//                                                        }
+//                                                    }
+//                                                });
+//                                    }
+//
+//                                } else {
+//                                    // If sign in fails
+//                                    Log.w(TAG, "createUserWithEmail:failure", task.getException());
+//                                    Toast.makeText(RegisterActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+//                                }
+//                            }
+//                        });
             } else {
                 Toast.makeText(RegisterActivity.this, "Please input the correct information", Toast.LENGTH_SHORT).show();
             }
