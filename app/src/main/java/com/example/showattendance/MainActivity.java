@@ -169,11 +169,10 @@ public class MainActivity extends AppCompatActivity {
                                     FirebaseUser firebaseUser = mAuth.getCurrentUser();
                                     assert firebaseUser != null;
 
-                                    // Check if email is verified
                                     if (!firebaseUser.isEmailVerified()) {
-                                        mAuth.signOut(); // Sign out if not verified
+                                        mAuth.signOut();
                                         Toast.makeText(MainActivity.this, "Please verify your email before logging in.", Toast.LENGTH_SHORT).show();
-                                        return; // Exit the login process
+                                        return;
                                     }
 
                                     String userId = firebaseUser.getUid();
@@ -216,58 +215,6 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(MainActivity.this, "Please input the correct information", Toast.LENGTH_SHORT).show();
             }
-
-
-            //            if (!email.isEmpty() && !password.isEmpty() && selectedRoleId != -1) {
-//                mAuth.signInWithEmailAndPassword(email, password)
-//                        .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-//                            @Override
-//                            public void onComplete(@NonNull Task<AuthResult> task) {
-//                                if (task.isSuccessful()) {
-//                                    Log.d(TAG, "signInWithEmail:success");
-//                                    FirebaseUser firebaseUser = mAuth.getCurrentUser();
-//                                    assert firebaseUser != null;
-//
-//                                    String userId = firebaseUser.getUid();
-//                                    db.collection("Users").document(userId).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-//                                        @Override
-//                                        public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-//                                            if (task.isSuccessful()) {
-//                                                DocumentSnapshot document = task.getResult();
-//                                                if (document.exists()) {
-//                                                    String role = document.getString("role");
-//                                                    if (role != null) {
-//                                                        if (role.equals(selectedRole)) {
-//                                                            if ((role.equals("Teacher") && email.toLowerCase().endsWith("yu.edu"))
-//                                                                    || (role.equals("Student") && email.toLowerCase().endsWith("mail.yu.edu"))) {
-//                                                                navigateToRoleActivity(role);
-//                                                            } else {
-//                                                                Toast.makeText(MainActivity.this, "Email domain does not match the selected role.", Toast.LENGTH_SHORT).show();
-//                                                            }
-//                                                        } else {
-//                                                            Toast.makeText(MainActivity.this, "Selected role does not match the user's role in the database.", Toast.LENGTH_SHORT).show();
-//                                                        }
-//                                                    } else {
-//                                                        Toast.makeText(MainActivity.this, "User role is not specified.", Toast.LENGTH_SHORT).show();
-//                                                    }
-//                                                } else {
-//                                                    Toast.makeText(MainActivity.this, "User does not exist.", Toast.LENGTH_SHORT).show();
-//                                                }
-//                                            } else {
-//                                                Log.w(TAG, "Error getting user role", task.getException());
-//                                                Toast.makeText(MainActivity.this, "Failed to verify user role.", Toast.LENGTH_SHORT).show();
-//                                            }
-//                                        }
-//                                    });
-//                                } else {
-//                                    Log.w(TAG, "signInWithEmail:failure", task.getException());
-//                                    Toast.makeText(MainActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
-//                                }
-//                            }
-//                        });
-//            } else {
-//                Toast.makeText(MainActivity.this, "Please input the correct information", Toast.LENGTH_SHORT).show();
-//            }
         });
 
         tvRegister.setOnClickListener(v -> {
